@@ -36,8 +36,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── Start ────────────────────────────────────────
-app.listen(PORT, () => {
-    console.log(`\n🧵 LM Ladies Tailor Billing Server`);
-    console.log(`   Running at → http://localhost:${PORT}`);
-    console.log(`   Health     → http://localhost:${PORT}/api/health\n`);
-});
+// Export app for Vercel Serverless
+module.exports = app;
+
+if (process.env.NODE_ENV !== 'production' || require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`\n🧵 LM Ladies Tailor Billing Server`);
+        console.log(`   Running at → http://localhost:${PORT}`);
+        console.log(`   Health     → http://localhost:${PORT}/api/health\n`);
+    });
+}
