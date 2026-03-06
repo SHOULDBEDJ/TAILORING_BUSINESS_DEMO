@@ -17,7 +17,18 @@ const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────
 app.use(cors({
-    origin: true, // Allow all origins for local development & hosting flexibility
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl requests, or same-origin)
+        if (!origin) return callback(null, true);
+
+        // Allow any Vercel domain or localhost
+        if (origin.endsWith('.vercel.app') || origin.startsWith('http://localhost:')) {
+            return callback(null, true);
+        }
+
+        // As a fallback for any other custom domains the user might add later
+        return callback(null, true);
+    },
     credentials: true,
 }));
 app.use(express.json({ limit: '50mb' }));
