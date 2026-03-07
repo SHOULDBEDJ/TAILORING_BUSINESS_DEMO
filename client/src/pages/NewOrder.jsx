@@ -16,6 +16,8 @@ const MEASUREMENT_FIELDS = [
     { key: 'front_neck', label: 'Front Neck' },
     { key: 'sleeves_length', label: 'Sleeves Length' },
     { key: 'armhole', label: 'Armhole' },
+    { key: 'chest_distance', label: 'Chest Distance' },
+    { key: 'sleeves_round', label: 'Sleeves Round' },
 ];
 
 const initialService = () => ({ service_type: 'Blouse', quantity: 1, price: '', custom_type: '' });
@@ -40,6 +42,7 @@ export default function NewOrder({ onMenuClick }) {
     const [measurements, setMeasurements] = useState({
         m_length: '', shoulder: '', chest: '', waist: '', dot: '',
         back_neck: '', front_neck: '', sleeves_length: '', armhole: '',
+        chest_distance: '', sleeves_round: '',
     });
 
     // Services

@@ -7,6 +7,7 @@ const MEASUREMENT_LABELS = {
     m_length: 'Length', shoulder: 'Shoulder', chest: 'Chest', waist: 'Waist',
     dot: 'Dot', back_neck: 'Back Neck', front_neck: 'Front Neck',
     sleeves_length: 'Sleeves Length', armhole: 'Armhole',
+    chest_distance: 'Chest Distance', sleeves_round: 'Sleeves Round',
 };
 
 function StatusBadge({ status }) {
@@ -84,7 +85,9 @@ export default function CustomerSearch({ onMenuClick }) {
             back_neck: selected.back_neck,
             front_neck: selected.front_neck,
             sleeves_length: selected.sleeves_length,
-            armhole: selected.armhole
+            armhole: selected.armhole,
+            chest_distance: selected.chest_distance,
+            sleeves_round: selected.sleeves_round
         });
         setIsEditing(true);
     }

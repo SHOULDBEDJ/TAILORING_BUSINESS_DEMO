@@ -38,6 +38,8 @@ async function initDB() {
         front_neck REAL,
         sleeves_length REAL,
         armhole REAL,
+        chest_distance REAL,
+        sleeves_round REAL,
         updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
         FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
       )`,
@@ -99,6 +101,16 @@ async function initDB() {
         // some other error
       }
     }
+
+    // Add new measurement fields if they don't exist
+    try {
+      await db.execute('ALTER TABLE measurements ADD COLUMN chest_distance REAL');
+      console.log('✅ Added chest_distance column to measurements table');
+    } catch (e) { }
+    try {
+      await db.execute('ALTER TABLE measurements ADD COLUMN sleeves_round REAL');
+      console.log('✅ Added sleeves_round column to measurements table');
+    } catch (e) { }
 
     console.log('✅ Database Initialized (' + (isLocal ? 'Local' : 'Cloud') + ')');
   } catch (err) {

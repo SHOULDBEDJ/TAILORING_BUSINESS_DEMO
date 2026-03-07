@@ -47,18 +47,34 @@ router.delete('/expenses/:id', async (req, res) => {
 });
 
 // GET /api/analytics/summary
-// Returns basic overview of Income vs Expense
+// Returns overview of Income vs Expense for Today, This Month, This Year, and All Time
 router.get('/summary', async (req, res) => {
     try {
-        // Simple analytics: total advance_paid (which acts as actual income when collected)
-        const incomeRs = await db.execute("SELECT sum(advance_paid) as total_income FROM orders");
-        const expenseRs = await db.execute("SELECT sum(amount) as total_expense FROM expenses");
+        const queries = {
+            total_income: "SELECT sum(advance_paid) as val FROM orders",
+            today_income: "SELECT sum(advance_paid) as val FROM orders WHERE substr(created_at, 1, 10) = date('now', 'localtime')",
+            monthly_income: "SELECT sum(advance_paid) as val FROM orders WHERE substr(created_at, 1, 7) = substr(date('now', 'localtime'), 1, 7)",
+            yearly_income: "SELECT sum(advance_paid) as val FROM orders WHERE substr(created_at, 1, 4) = substr(date('now', 'localtime'), 1, 4)",
 
-        const total_income = incomeRs.rows[0]?.total_income || 0;
-        const total_expense = expenseRs.rows[0]?.total_expense || 0;
-        const net_profit = total_income - total_expense;
+            total_expense: "SELECT sum(amount) as val FROM expenses",
+            today_expense: "SELECT sum(amount) as val FROM expenses WHERE date = date('now', 'localtime')",
+            monthly_expense: "SELECT sum(amount) as val FROM expenses WHERE substr(date, 1, 7) = substr(date('now', 'localtime'), 1, 7)",
+            yearly_expense: "SELECT sum(amount) as val FROM expenses WHERE substr(date, 1, 4) = substr(date('now', 'localtime'), 1, 4)",
+        };
 
-        res.json({ total_income, total_expense, net_profit });
+        const results = {};
+        for (const [key, sql] of Object.entries(queries)) {
+            const rs = await db.execute(sql);
+            results[key] = rs.rows[0]?.val || 0;
+        }
+
+        results.today_profit = results.today_income - results.today_expense;
+        results.monthly_profit = results.monthly_income - results.monthly_expense;
+        results.yearly_profit = results.yearly_income - results.yearly_expense;
+        results.total_profit = results.total_income - results.total_expense;
+        results.net_profit = results.total_profit; // for backwards compatibility if needed
+
+        res.json(results);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

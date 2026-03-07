@@ -6,7 +6,12 @@ import api from '../api/axios';
 const CATEGORIES = ['Fabric/Material', 'Thread/Accessories', 'Electricity', 'Rent', 'Maintenance', 'Other'];
 
 export default function Analytics({ onMenuClick }) {
-    const [summary, setSummary] = useState({ total_income: 0, total_expense: 0, net_profit: 0 });
+    const [summary, setSummary] = useState({
+        today_income: 0, today_expense: 0, today_profit: 0,
+        monthly_income: 0, monthly_expense: 0, monthly_profit: 0,
+        yearly_income: 0, yearly_expense: 0, yearly_profit: 0,
+        total_income: 0, total_expense: 0, net_profit: 0
+    });
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -91,10 +96,34 @@ export default function Analytics({ onMenuClick }) {
 
             <div className="page-container">
                 {/* Summary Cards */}
-                <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-                    <StatCard label="Total Income (Advance/Cleared)" value={summary.total_income} colorClass="bg-maroon" icon={TrendingUp} />
-                    <StatCard label="Total Expenses" value={summary.total_expense} colorClass="bg-red" icon={TrendingDown} />
-                    <StatCard label="Net Profit" value={summary.net_profit} colorClass="bg-green" icon={DollarSign} />
+                <div style={{ marginBottom: 24 }}>
+                    <h3 className="card-title" style={{ marginBottom: 12 }}>Today Overview</h3>
+                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+                        <StatCard label="Income" value={summary.today_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                        <StatCard label="Expenses" value={summary.today_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                        <StatCard label="Profit" value={summary.today_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    </div>
+
+                    <h3 className="card-title" style={{ marginBottom: 12 }}>This Month</h3>
+                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+                        <StatCard label="Income" value={summary.monthly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                        <StatCard label="Expenses" value={summary.monthly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                        <StatCard label="Profit" value={summary.monthly_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    </div>
+
+                    <h3 className="card-title" style={{ marginBottom: 12 }}>This Year</h3>
+                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+                        <StatCard label="Income" value={summary.yearly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                        <StatCard label="Expenses" value={summary.yearly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                        <StatCard label="Profit" value={summary.yearly_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    </div>
+
+                    <h3 className="card-title" style={{ marginBottom: 12 }}>All Time</h3>
+                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+                        <StatCard label="Total Income" value={summary.total_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                        <StatCard label="Total Expenses" value={summary.total_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                        <StatCard label="Net Profit" value={summary.net_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    </div>
                 </div>
 
                 <div className="grid-2">

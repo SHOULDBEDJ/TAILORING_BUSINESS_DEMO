@@ -10,13 +10,13 @@ router.get('/search', async (req, res) => {
 
         if (phone) {
             query = `SELECT c.*, m.length as m_length, m.shoulder, m.chest, m.waist, m.dot,
-                 m.back_neck, m.front_neck, m.sleeves_length, m.armhole
+                 m.back_neck, m.front_neck, m.sleeves_length, m.armhole, m.chest_distance, m.sleeves_round
                  FROM customers c LEFT JOIN measurements m ON m.customer_id = c.id
                  WHERE c.phone_number LIKE ? GROUP BY c.id`;
             param = `%${phone}%`;
         } else if (name) {
             query = `SELECT c.*, m.length as m_length, m.shoulder, m.chest, m.waist, m.dot,
-                 m.back_neck, m.front_neck, m.sleeves_length, m.armhole
+                 m.back_neck, m.front_neck, m.sleeves_length, m.armhole, m.chest_distance, m.sleeves_round
                  FROM customers c LEFT JOIN measurements m ON m.customer_id = c.id
                  WHERE c.name LIKE ? GROUP BY c.id`;
             param = `%${name}%`;
@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
         const id = req.params.id;
         const rs = await db.execute({
             sql: `SELECT c.*, m.length as m_length, m.shoulder, m.chest, m.waist, m.dot,
-                  m.back_neck, m.front_neck, m.sleeves_length, m.armhole
+                  m.back_neck, m.front_neck, m.sleeves_length, m.armhole, m.chest_distance, m.sleeves_round
                   FROM customers c LEFT JOIN measurements m ON m.customer_id = c.id
                   WHERE c.id = ?`,
             args: [id]
@@ -61,7 +61,7 @@ router.get('/:id', async (req, res) => {
 // Helper for measurements upsert in LibSQL
 async function upsertMeasurements(customerId, measurements) {
     if (!measurements || Object.keys(measurements).length === 0) return;
-    const { m_length, length, shoulder, chest, waist, dot, back_neck, front_neck, sleeves_length, armhole } = measurements;
+    const { m_length, length, shoulder, chest, waist, dot, back_neck, front_neck, sleeves_length, armhole, chest_distance, sleeves_round } = measurements;
 
     // Normalize length key (accept both m_length and length)
     const activeLength = m_length !== undefined ? m_length : length;
@@ -74,24 +74,25 @@ async function upsertMeasurements(customerId, measurements) {
     if (existM.rows.length > 0) {
         await db.execute({
             sql: `UPDATE measurements SET length=?,shoulder=?,chest=?,waist=?,dot=?,
-                  back_neck=?,front_neck=?,sleeves_length=?,armhole=?,
+                  back_neck=?,front_neck=?,sleeves_length=?,armhole=?,chest_distance=?,sleeves_round=?,
                   updated_at=datetime('now','localtime') WHERE customer_id=?`,
             args: [
                 parseFloat(activeLength) || null, parseFloat(shoulder) || null, parseFloat(chest) || null,
                 parseFloat(waist) || null, parseFloat(dot) || null, parseFloat(back_neck) || null,
                 parseFloat(front_neck) || null, parseFloat(sleeves_length) || null, parseFloat(armhole) || null,
+                parseFloat(chest_distance) || null, parseFloat(sleeves_round) || null,
                 customerId
             ]
         });
     } else {
         await db.execute({
-            sql: `INSERT INTO measurements (customer_id,length,shoulder,chest,waist,dot,back_neck,front_neck,sleeves_length,armhole)
-                  VALUES (?,?,?,?,?,?,?,?,?,?)`,
+            sql: `INSERT INTO measurements (customer_id,length,shoulder,chest,waist,dot,back_neck,front_neck,sleeves_length,armhole,chest_distance,sleeves_round)
+                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
             args: [
                 customerId,
                 parseFloat(activeLength) || null, parseFloat(shoulder) || null, parseFloat(chest) || null,
                 parseFloat(waist) || null, parseFloat(dot) || null, parseFloat(back_neck) || null,
-                parseFloat(front_neck) || null, parseFloat(sleeves_length) || null, parseFloat(armhole) || null
+                parseFloat(front_neck) || null, parseFloat(sleeves_length) || null, parseFloat(armhole) || null, parseFloat(chest_distance) || null, parseFloat(sleeves_round) || null
             ]
         });
     }
