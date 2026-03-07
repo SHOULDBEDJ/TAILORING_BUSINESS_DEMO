@@ -77,6 +77,14 @@ async function initDB() {
         amount REAL NOT NULL,
         description TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      )`,
+      `CREATE TABLE IF NOT EXISTS order_voice_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        audio_data TEXT NOT NULL,
+        duration INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
       )`
     ], "write");
     console.log('✅ Batch execution successful');

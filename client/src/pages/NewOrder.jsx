@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, ChevronDown, User, Ruler, Scissors, CreditCard, Search, Menu, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, User, Ruler, Scissors, CreditCard, Search, Menu, Image as ImageIcon, X, Mic, Square, Trash } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
@@ -50,6 +50,16 @@ export default function NewOrder({ onMenuClick }) {
 
     // Payment
     const [advancePaid, setAdvancePaid] = useState('');
+
+    // Voice Note
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const [audioUrl, setAudioUrl] = useState(null);
+
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const timerRef = useRef(null);
 
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -101,6 +111,66 @@ export default function NewOrder({ onMenuClick }) {
     function updateService(i, field, val) {
         setServices(s => s.map((svc, idx) => idx === i ? { ...svc, [field]: val } : svc));
     }
+
+    // ── Voice Note ────────────────────────────────────
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+        }
+        setIsRecording(false);
+        clearInterval(timerRef.current);
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunksRef.current.push(e.data);
+            };
+
+            mediaRecorderRef.current.onstop = () => {
+                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setAudioBlob(blob);
+                setAudioUrl(URL.createObjectURL(blob));
+                // stop microphone access
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => {
+                    if (prev >= 119) {
+                        stopRecording();
+                        return 120;
+                    }
+                    return prev + 1;
+                });
+            }, 1000);
+        } catch (err) {
+            toast.error('Microphone access denied or unavailable');
+        }
+    };
+
+    const clearAudio = () => {
+        setAudioBlob(null);
+        setAudioUrl(null);
+        setRecordingTime(0);
+    };
+
+    const blobToBase64 = (blob) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
 
     // ── Image handle ──────────────────────────────────
     const handleImageUpload = (e) => {
@@ -191,6 +261,15 @@ export default function NewOrder({ onMenuClick }) {
                 await api.post(`/orders/${createdOrderId}/images`, { images });
             }
 
+            // Upload voice note if any
+            if (audioBlob) {
+                const base64Audio = await blobToBase64(audioBlob);
+                await api.post(`/orders/${createdOrderId}/voice-notes`, {
+                    audio_data: base64Audio,
+                    duration: recordingTime
+                });
+            }
+
             toast.success('Order created successfully!');
             navigate(`/bill/${createdOrderId}`);
         } catch (err) {
@@ -266,13 +345,35 @@ export default function NewOrder({ onMenuClick }) {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Notes (optional)</label>
+                                    <label className="form-label">Notes & Voice Instructions</label>
                                     <input
                                         className="form-input"
                                         value={customer.notes}
                                         onChange={e => setCustomer(c => ({ ...c, notes: e.target.value }))}
-                                        placeholder="Any special instructions..."
+                                        placeholder="Any special written instructions..."
                                     />
+                                    <div style={{ marginTop: 8 }}>
+                                        {isRecording ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#FFEBEE', padding: '8px 12px', borderRadius: 8, border: '1px solid #FFCDD2' }}>
+                                                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#D32F2F', animation: 'blink 1s infinite' }} />
+                                                <span style={{ color: '#D32F2F', fontWeight: 600, fontSize: 13, flex: 1 }}>Recording: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')} / 2:00</span>
+                                                <button type="button" onClick={stopRecording} style={{ background: '#D32F2F', color: 'white', border: 'none', borderRadius: 4, padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                                                    <Square size={12} /> Stop
+                                                </button>
+                                            </div>
+                                        ) : audioUrl ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#E8F5E9', padding: '8px 12px', borderRadius: 8, border: '1px solid #C8E6C9' }}>
+                                                <audio src={audioUrl} controls style={{ height: 32, flex: 1 }} />
+                                                <button type="button" onClick={clearAudio} style={{ background: 'transparent', border: 'none', color: '#D32F2F', cursor: 'pointer', padding: 4 }} title="Delete voice note">
+                                                    <Trash size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button type="button" className="btn btn-outline btn-sm" onClick={startRecording} style={{ width: '100%', justifyContent: 'center', gap: 6 }}>
+                                                <Mic size={14} color="#D32F2F" /> Record Voice Note (Max 2m)
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -521,6 +622,9 @@ export default function NewOrder({ onMenuClick }) {
 
                 </form>
             </div>
+            <style>{`
+                @keyframes blink { 50% { opacity: 0.5; } }
+            `}</style>
         </div>
     );
 }

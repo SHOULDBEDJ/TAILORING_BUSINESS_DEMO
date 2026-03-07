@@ -19,6 +19,7 @@ export default function BillPreview({ onMenuClick }) {
     const navigate = useNavigate();
     const [order, setOrder] = useState(null);
     const [images, setImages] = useState([]);
+    const [voiceNotes, setVoiceNotes] = useState([]);
     const [previewImage, setPreviewImage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [statusUpdating, setStatusUpdating] = useState(false);
@@ -26,11 +27,13 @@ export default function BillPreview({ onMenuClick }) {
     useEffect(() => {
         Promise.all([
             api.get(`/orders/${orderId}`),
-            api.get(`/orders/${orderId}/images`).catch(() => ({ data: [] })) // suppress error if images fail
+            api.get(`/orders/${orderId}/images`).catch(() => ({ data: [] })), // suppress error if images fail
+            api.get(`/orders/${orderId}/voice-notes`).catch(() => ({ data: [] }))
         ])
-            .then(([orderRes, imgRes]) => {
+            .then(([orderRes, imgRes, voiceRes]) => {
                 setOrder(orderRes.data);
                 setImages(imgRes.data);
+                setVoiceNotes(voiceRes.data);
             })
             .catch(() => toast.error('Order not found'))
             .finally(() => setLoading(false));
@@ -273,6 +276,20 @@ export default function BillPreview({ onMenuClick }) {
                                     <span style={{ fontSize: 11, color: 'var(--gray)', fontStyle: 'italic' }}>
                                         Note: {order.notes}
                                     </span>
+                                </div>
+                            )}
+
+                            {/* Voice Notes */}
+                            {voiceNotes.length > 0 && (
+                                <div className="bill-section no-print" style={{ borderTop: '1px solid var(--gray-light)' }}>
+                                    <span style={{ fontSize: 11, color: 'var(--maroon)', fontWeight: 600, textTransform: 'uppercase', display: 'block', marginBottom: 8, letterSpacing: '0.05em' }}>
+                                        Voice Instructions
+                                    </span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        {voiceNotes.map(vn => (
+                                            <audio key={vn.id} src={vn.audio_data} controls style={{ width: '100%', height: 36, outline: 'none', borderRadius: 8 }} />
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 

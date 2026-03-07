@@ -211,4 +211,53 @@ router.delete('/images/:imageId', async (req, res) => {
     }
 });
 
+// ─── Voice Notes (Feature 4) ─────────────────────────
+
+// GET /api/orders/:id/voice-notes
+router.get('/:id/voice-notes', async (req, res) => {
+    try {
+        const rs = await db.execute({
+            sql: 'SELECT id, audio_data, duration, created_at FROM order_voice_notes WHERE order_id = ? ORDER BY created_at DESC',
+            args: [req.params.id]
+        });
+        res.json(rs.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/orders/:id/voice-notes
+router.post('/:id/voice-notes', async (req, res) => {
+    try {
+        const { audio_data, duration } = req.body; // base64 string
+        if (!audio_data) {
+            return res.status(400).json({ error: 'audio_data required' });
+        }
+
+        // We generally expect 1 voice note per order, but could be multiple.
+        // For now, we just insert. If we wanted 1 max, we'd delete existing first.
+        await db.execute({
+            sql: 'INSERT INTO order_voice_notes (order_id, audio_data, duration) VALUES (?, ?, ?)',
+            args: [req.params.id, audio_data, duration || null]
+        });
+
+        res.status(201).json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/orders/voice-notes/:noteId
+router.delete('/voice-notes/:noteId', async (req, res) => {
+    try {
+        await db.execute({
+            sql: 'DELETE FROM order_voice_notes WHERE id = ?',
+            args: [req.params.noteId]
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
