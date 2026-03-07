@@ -73,6 +73,13 @@ export default function BillPreview({ onMenuClick }) {
 
     function handleWhatsApp() {
         if (!order) return;
+
+        // Format phone number for WhatsApp URL (must contain digits only, starting with country code)
+        let phoneForUrl = order.phone_number.replace(/\D/g, '');
+        if (phoneForUrl.length === 10) {
+            phoneForUrl = '91' + phoneForUrl; // Default to India country code if 10 digits
+        }
+
         const msg = encodeURIComponent(
             `*LM Ladies Tailor - Bill*\n\n` +
             `Customer: ${order.customer_name}\n` +
@@ -87,7 +94,7 @@ export default function BillPreview({ onMenuClick }) {
             `*Balance Due: \u20b9${parseFloat(order.balance_amount).toFixed(2)}*\n\n` +
             `_LM Ladies Tailor | Dajibanpeth, Beside Ganesh Temple, Hubli | 9916562127_`
         );
-        window.open(`https://wa.me/${order.phone_number}?text=${msg}`, '_blank');
+        window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
     }
 
     async function handleStatusChange(newStatus) {
