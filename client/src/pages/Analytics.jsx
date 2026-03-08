@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Menu, ChevronDown, 
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
-const CATEGORIES = ['Fabric/Material', 'Thread/Accessories', 'Electricity', 'Rent', 'Maintenance', 'Other'];
+const CATEGORIES = ['PRAVEEN', 'RENUKA', 'JAIRULL', 'SADDAM', 'KHALIM', 'Fabric/Material', 'Thread/Accessories', 'Electricity', 'Rent', 'Maintenance', 'Other'];
 
 export default function Analytics({ onMenuClick }) {
     const [summary, setSummary] = useState({
@@ -29,7 +29,7 @@ export default function Analytics({ onMenuClick }) {
     // Form state
     const [form, setForm] = useState({
         date: new Date().toISOString().split('T')[0],
-        category: 'Fabric/Material',
+        category: 'PRAVEEN',
         amount: '',
         description: ''
     });
