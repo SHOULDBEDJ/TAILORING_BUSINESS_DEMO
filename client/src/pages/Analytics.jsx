@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Menu } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Menu, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
@@ -14,6 +14,17 @@ export default function Analytics({ onMenuClick }) {
     });
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const [expandedSections, setExpandedSections] = useState({
+        today: true,
+        month: true,
+        year: true,
+        allTime: false
+    });
+
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     // Form state
     const [form, setForm] = useState({
@@ -96,33 +107,82 @@ export default function Analytics({ onMenuClick }) {
 
             <div className="page-container">
                 {/* Summary Cards */}
+                {/* Summary Cards */}
                 <div style={{ marginBottom: 24 }}>
-                    <h3 className="card-title" style={{ marginBottom: 12 }}>Today Overview</h3>
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-                        <StatCard label="Income" value={summary.today_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                        <StatCard label="Expenses" value={summary.today_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                        <StatCard label="Profit" value={summary.today_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    {/* Today Section */}
+                    <div style={{ marginBottom: 16 }}>
+                        <div
+                            className="flex-between"
+                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
+                            onClick={() => toggleSection('today')}
+                        >
+                            <h3 className="card-title" style={{ margin: 0 }}>Today Overview</h3>
+                            {expandedSections.today ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                        </div>
+                        {expandedSections.today && (
+                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+                                <StatCard label="Income" value={summary.today_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                                <StatCard label="Expenses" value={summary.today_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                                <StatCard label="Profit" value={summary.today_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                            </div>
+                        )}
                     </div>
 
-                    <h3 className="card-title" style={{ marginBottom: 12 }}>This Month</h3>
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-                        <StatCard label="Income" value={summary.monthly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                        <StatCard label="Expenses" value={summary.monthly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                        <StatCard label="Profit" value={summary.monthly_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    {/* This Month Section */}
+                    <div style={{ marginBottom: 16 }}>
+                        <div
+                            className="flex-between"
+                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
+                            onClick={() => toggleSection('month')}
+                        >
+                            <h3 className="card-title" style={{ margin: 0 }}>This Month</h3>
+                            {expandedSections.month ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                        </div>
+                        {expandedSections.month && (
+                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+                                <StatCard label="Income" value={summary.monthly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                                <StatCard label="Expenses" value={summary.monthly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                                <StatCard label="Profit" value={summary.monthly_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                            </div>
+                        )}
                     </div>
 
-                    <h3 className="card-title" style={{ marginBottom: 12 }}>This Year</h3>
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-                        <StatCard label="Income" value={summary.yearly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                        <StatCard label="Expenses" value={summary.yearly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                        <StatCard label="Profit" value={summary.yearly_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    {/* This Year Section */}
+                    <div style={{ marginBottom: 16 }}>
+                        <div
+                            className="flex-between"
+                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
+                            onClick={() => toggleSection('year')}
+                        >
+                            <h3 className="card-title" style={{ margin: 0 }}>This Year</h3>
+                            {expandedSections.year ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                        </div>
+                        {expandedSections.year && (
+                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+                                <StatCard label="Income" value={summary.yearly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                                <StatCard label="Expenses" value={summary.yearly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                                <StatCard label="Profit" value={summary.yearly_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                            </div>
+                        )}
                     </div>
 
-                    <h3 className="card-title" style={{ marginBottom: 12 }}>All Time</h3>
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-                        <StatCard label="Total Income" value={summary.total_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                        <StatCard label="Total Expenses" value={summary.total_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                        <StatCard label="Net Profit" value={summary.net_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    {/* All Time Section */}
+                    <div style={{ marginBottom: 16 }}>
+                        <div
+                            className="flex-between"
+                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
+                            onClick={() => toggleSection('allTime')}
+                        >
+                            <h3 className="card-title" style={{ margin: 0 }}>All Time</h3>
+                            {expandedSections.allTime ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                        </div>
+                        {expandedSections.allTime && (
+                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+                                <StatCard label="Total Income" value={summary.total_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                                <StatCard label="Total Expenses" value={summary.total_expense || 0} colorClass="bg-red" icon={TrendingDown} />
+                                <StatCard label="Net Profit" value={summary.net_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                            </div>
+                        )}
                     </div>
                 </div>
 

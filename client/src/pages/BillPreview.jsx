@@ -100,6 +100,26 @@ export default function BillPreview({ onMenuClick }) {
         window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
     }
 
+    function handleWhatsAppReview() {
+        if (!order) return;
+
+        let phoneForUrl = order.phone_number.replace(/\D/g, '');
+        if (phoneForUrl.length === 10) {
+            phoneForUrl = '91' + phoneForUrl;
+        }
+
+        const msg = encodeURIComponent(
+            `Dear ${order.customer_name},\n\n` +
+            `Thank you for choosing L.M. Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
+            `We would love to hear your feedback. Your review helps us improve and also supports our small business.\n\n` +
+            `If you have a moment, please leave us a review on Google:\n` +
+            `https://g.co/kgs/LUPXvNh\n\n` +
+            `Thank you for your support!\n` +
+            `– L.M. Ladies Tailor`
+        );
+        window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
+    }
+
     async function handleStatusChange(newStatus) {
         setStatusUpdating(true);
         try {
@@ -320,8 +340,13 @@ export default function BillPreview({ onMenuClick }) {
 
                         {/* Action buttons below bill */}
                         <div className="flex gap-8 mt-16 no-print" style={{ justifyContent: 'center' }}>
-                            <button className="btn btn-outline" onClick={handleWhatsApp}><Share2 size={15} /> WhatsApp</button>
+                            <button className="btn btn-outline" onClick={handleWhatsApp}><Share2 size={15} /> WhatsApp Bill</button>
                             <button className="btn btn-primary" onClick={handlePrint}><Printer size={15} /> Print / Save PDF</button>
+                            {order.status === 'Delivered' && (
+                                <button className="btn btn-outline" style={{ borderColor: '#2E7D32', color: '#2E7D32' }} onClick={handleWhatsAppReview}>
+                                    <CheckCircle size={15} /> Request Review
+                                </button>
+                            )}
                         </div>
                     </div>
 

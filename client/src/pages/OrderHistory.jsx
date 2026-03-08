@@ -53,6 +53,24 @@ export default function OrderHistory({ onMenuClick }) {
             o.phone_number.includes(search);
     });
 
+    const handleWhatsAppReview = (order) => {
+        let phoneForUrl = order.phone_number.replace(/\D/g, '');
+        if (phoneForUrl.length === 10) {
+            phoneForUrl = '91' + phoneForUrl;
+        }
+
+        const msg = encodeURIComponent(
+            `Dear ${order.customer_name},\n\n` +
+            `Thank you for choosing L.M. Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
+            `We would love to hear your feedback. Your review helps us improve and also supports our small business.\n\n` +
+            `If you have a moment, please leave us a review on Google:\n` +
+            `https://g.co/kgs/LUPXvNh\n\n` +
+            `Thank you for your support!\n` +
+            `– L.M. Ladies Tailor`
+        );
+        window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
+    };
+
     return (
         <div>
             <div className="topbar flex-between">
@@ -178,10 +196,19 @@ export default function OrderHistory({ onMenuClick }) {
                                                     <option>Delivered</option>
                                                 </select>
                                             </td>
-                                            <td>
+                                            <td style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <Link to={`/bill/${o.order_id}`} className="btn btn-sm btn-outline">
                                                     <Eye size={12} /> Bill
                                                 </Link>
+                                                {o.status === 'Delivered' && (
+                                                    <button
+                                                        className="btn btn-sm btn-outline"
+                                                        style={{ borderColor: '#2E7D32', color: '#2E7D32', padding: '4px 8px' }}
+                                                        onClick={(e) => { e.stopPropagation(); handleWhatsAppReview(o); }}
+                                                    >
+                                                        Review
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
