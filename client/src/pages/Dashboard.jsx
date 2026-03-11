@@ -34,16 +34,36 @@ function formatDate(d) {
     return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+/* Mini card for dashboard order lists (mobile-friendly) */
+function OrderMiniCard({ o }) {
+    return (
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <Link to={`/customer/${o.customer_id}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600, fontSize: 13, display: 'block' }}>
+                    {o.customer_name}
+                </Link>
+                <a href={`tel:${o.phone_number}`} style={{ fontSize: 11, color: 'var(--gray)', textDecoration: 'none' }}>{o.phone_number}</a>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <StatusBadge status={o.status} />
+                <Link to={`/bill/${o.order_id}`} className="btn btn-sm btn-outline">
+                    <Eye size={12} /> View
+                </Link>
+            </div>
+        </div>
+    );
+}
+
 export default function Dashboard({ onMenuClick }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('dueToday');
     const notifiedRef = React.useRef(false);
 
     useEffect(() => {
         api.get('/dashboard')
             .then(r => {
                 setData(r.data);
-                // Show notifications for due today
                 if (!notifiedRef.current && r.data.dueTodayOrders?.length > 0) {
                     r.data.dueTodayOrders.forEach(order => {
                         toast(`🚚 ${order.customer_name}'s delivery is due today!`, {
@@ -86,6 +106,9 @@ export default function Dashboard({ onMenuClick }) {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
+    const activeOrders = activeTab === 'dueToday' ? data?.dueTodayOrders :
+        activeTab === 'pending' ? data?.pendingOrders : data?.readyOrders;
+
     return (
         <div>
             <div className="topbar flex-between">
@@ -111,13 +134,23 @@ export default function Dashboard({ onMenuClick }) {
                     </div>
                 )}
 
+                {/* Stat cards — grid-4 collapses via CSS */}
                 <div className="grid-4 mb-24">
-                    <StatCard value={data?.dueToday} label="Due Today" icon={Clock}
-                        colorClass="gold" iconBg="rgba(198,167,94,0.12)" iconColor="#C6A75E" />
-                    <StatCard value={data?.pendingCount} label="Pending Orders" icon={Package}
-                        colorClass="maroon" iconBg="rgba(106,30,46,0.1)" iconColor="#6A1E2E" />
-                    <StatCard value={data?.readyCount} label="Ready for Pickup" icon={CheckCircle}
-                        colorClass="green" iconBg="rgba(46,125,50,0.1)" iconColor="#2E7D32" />
+                    <div onClick={() => setActiveTab('dueToday')} style={{ cursor: 'pointer' }}>
+                        <StatCard value={data?.dueToday} label="Due Today" icon={Clock}
+                            colorClass={`gold ${activeTab === 'dueToday' ? 'active-stat' : ''}`}
+                            iconBg="rgba(198,167,94,0.12)" iconColor="#C6A75E" />
+                    </div>
+                    <div onClick={() => setActiveTab('pending')} style={{ cursor: 'pointer' }}>
+                        <StatCard value={data?.pendingCount} label="Pending Orders" icon={Package}
+                            colorClass={`maroon ${activeTab === 'pending' ? 'active-stat' : ''}`}
+                            iconBg="rgba(106,30,46,0.1)" iconColor="#6A1E2E" />
+                    </div>
+                    <div onClick={() => setActiveTab('ready')} style={{ cursor: 'pointer' }}>
+                        <StatCard value={data?.readyCount} label="Ready for Pickup" icon={CheckCircle}
+                            colorClass={`green ${activeTab === 'ready' ? 'active-stat' : ''}`}
+                            iconBg="rgba(46,125,50,0.1)" iconColor="#2E7D32" />
+                    </div>
                     <StatCard
                         value={`\u20b9${(data?.totalEarnings || 0).toLocaleString('en-IN')}`}
                         label="Total Earnings"
@@ -128,45 +161,31 @@ export default function Dashboard({ onMenuClick }) {
                     />
                 </div>
 
+                {/* grid-2 collapses to 1-col on mobile */}
                 <div className="grid-2 gap-16">
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">Due Today</h3>
-                            <span className="badge badge-pending">{data?.dueToday} orders</span>
+                            <h3 className="card-title">
+                                {activeTab === 'dueToday' ? 'Due Today' :
+                                    activeTab === 'pending' ? 'Pending Orders' : 'Ready for Pickup'}
+                            </h3>
+                            <span className={`badge ${activeTab === 'dueToday' ? 'badge-pending' :
+                                activeTab === 'pending' ? 'badge-pending' : 'badge-ready'
+                                }`}>
+                                {activeTab === 'dueToday' ? data?.dueToday :
+                                    activeTab === 'pending' ? data?.pendingCount : data?.readyCount} orders
+                            </span>
                         </div>
                         <div className="card-body" style={{ padding: 0 }}>
-                            {!data?.dueTodayOrders?.length ? (
+                            {!activeOrders?.length ? (
                                 <div className="empty-state" style={{ padding: '32px 24px' }}>
                                     <CheckCircle size={32} style={{ opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
-                                    No deliveries due today
+                                    No {activeTab === 'dueToday' ? 'deliveries due today' :
+                                        activeTab === 'pending' ? 'pending orders' : 'orders ready for pickup'}
                                 </div>
                             ) : (
-                                <div className="table-container" style={{ borderRadius: 0, border: 'none' }}>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Customer</th><th>Phone</th><th>Status</th><th>Bill</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {data.dueTodayOrders.map(o => (
-                                                <tr key={o.order_id}>
-                                                    <td>
-                                                        <Link to={`/customer/${o.customer_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                                                            <strong>{o.customer_name}</strong>
-                                                        </Link>
-                                                    </td>
-                                                    <td style={{ fontSize: 12 }}>{o.phone_number}</td>
-                                                    <td><StatusBadge status={o.status} /></td>
-                                                    <td>
-                                                        <Link to={`/bill/${o.order_id}`} className="btn btn-sm btn-outline">
-                                                            <Eye size={12} /> View
-                                                        </Link>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <div>
+                                    {activeOrders.map(o => <OrderMiniCard key={o.order_id} o={o} />)}
                                 </div>
                             )}
                         </div>
@@ -211,11 +230,13 @@ export default function Dashboard({ onMenuClick }) {
                     </div>
                 </div>
 
+                {/* Recent Orders — card-based on mobile */}
                 <div className="card mt-24">
                     <div className="card-header">
                         <h3 className="card-title">Recent Orders</h3>
                         <Link to="/orders" className="btn btn-sm btn-ghost">View All</Link>
                     </div>
+                    {/* Table on desktop */}
                     <div className="table-container" style={{ border: 'none' }}>
                         <table>
                             <thead>
@@ -257,6 +278,13 @@ export default function Dashboard({ onMenuClick }) {
                     </div>
                 </div>
             </div>
+            <style>{`
+                .active-stat {
+                    box-shadow: 0 0 0 3px var(--gold-light), var(--shadow-lg) !important;
+                    transform: translateY(-2px);
+                }
+                /* On mobile, recent orders table scrolls horizontally — table-container handles this */
+            `}</style>
         </div>
     );
 }

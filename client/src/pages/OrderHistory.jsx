@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Eye, Filter, RefreshCw, Menu } from 'lucide-react';
+import { Search, Eye, Filter, RefreshCw, Menu, LayoutList, LayoutGrid } from 'lucide-react';
 import api from '../api/axios';
 
 function StatusBadge({ status }) {
@@ -22,6 +22,16 @@ export default function OrderHistory({ onMenuClick }) {
     const [statusFilter, setStatusFilter] = useState('All');
     const [dateFilter, setDateFilter] = useState('');
     const [updatingId, setUpdatingId] = useState(null);
+    const [viewMode, setViewMode] = useState(() => window.innerWidth < 768 ? 'card' : 'table');
+
+    // Keep viewMode in sync with screen size changes
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) setViewMode('card');
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     function fetchOrders() {
         setLoading(true);
@@ -58,15 +68,14 @@ export default function OrderHistory({ onMenuClick }) {
         if (phoneForUrl.length === 10) {
             phoneForUrl = '91' + phoneForUrl;
         }
-
         const msg = encodeURIComponent(
             `Dear ${order.customer_name},\n\n` +
-            `Thank you for choosing L.M. Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
+            `Thank you for choosing Demo Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
             `We would love to hear your feedback. Your review helps us improve and also supports our small business.\n\n` +
             `If you have a moment, please leave us a review on Google:\n` +
             `https://g.co/kgs/LUPXvNh\n\n` +
             `Thank you for your support!\n` +
-            `– L.M. Ladies Tailor`
+            `– Demo Ladies Tailor`
         );
         window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
     };
@@ -83,15 +92,36 @@ export default function OrderHistory({ onMenuClick }) {
                         <div className="topbar-subtitle">{filtered.length} order(s) found</div>
                     </div>
                 </div>
-                <button className="btn btn-ghost" onClick={fetchOrders}>
-                    <RefreshCw size={15} /> <span className="hide-mobile">Refresh</span>
-                </button>
+                <div className="flex gap-8">
+                    {/* View Toggle */}
+                    <div className="view-toggle">
+                        <button
+                            className={`view-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+                            onClick={() => setViewMode('table')}
+                            title="Table View"
+                        >
+                            <LayoutList size={15} />
+                            <span className="hide-mobile">Table</span>
+                        </button>
+                        <button
+                            className={`view-toggle-btn ${viewMode === 'card' ? 'active' : ''}`}
+                            onClick={() => setViewMode('card')}
+                            title="Card View"
+                        >
+                            <LayoutGrid size={15} />
+                            <span className="hide-mobile">Cards</span>
+                        </button>
+                    </div>
+                    <button className="btn btn-ghost" onClick={fetchOrders}>
+                        <RefreshCw size={15} /> <span className="hide-mobile">Refresh</span>
+                    </button>
+                </div>
             </div>
 
             <div className="page-container">
                 {/* Filters */}
                 <div className="card mb-20">
-                    <div className="card-body" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div className="card-body filter-card-body" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                         <div style={{ flex: 2, minWidth: 200 }}>
                             <label className="form-label"><Search size={12} style={{ marginRight: 4 }} />Search</label>
                             <input
@@ -123,7 +153,7 @@ export default function OrderHistory({ onMenuClick }) {
                 </div>
 
                 {/* Status filter tabs */}
-                <div className="flex gap-8 mb-16">
+                <div className="flex gap-8 mb-16 status-tabs" style={{ flexWrap: 'wrap' }}>
                     {STATUS_OPTIONS.map(s => (
                         <button
                             key={s}
@@ -136,10 +166,11 @@ export default function OrderHistory({ onMenuClick }) {
                 </div>
 
                 <div className="card">
-                    <div className="table-container" style={{ border: 'none' }}>
-                        {loading ? (
-                            <div className="spinner" />
-                        ) : (
+                    {loading ? (
+                        <div className="spinner" />
+                    ) : viewMode === 'table' ? (
+                        /* ── Table View ── */
+                        <div className="table-container" style={{ border: 'none' }}>
                             <table>
                                 <thead>
                                     <tr>
@@ -214,8 +245,93 @@ export default function OrderHistory({ onMenuClick }) {
                                     ))}
                                 </tbody>
                             </table>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        /* ── Card View ── */
+                        filtered.length === 0 ? (
+                            <div className="empty-state">No orders found</div>
+                        ) : (
+                            <div className="order-cards-grid">
+                                {filtered.map(o => {
+                                    const isOverdue = new Date(o.delivery_date) < new Date() && o.status !== 'Delivered';
+                                    const balanceAmt = parseFloat(o.balance_amount);
+                                    return (
+                                        <div key={o.order_id} className="order-card">
+                                            <div className="order-card-header">
+                                                <span className="order-card-id">#{String(o.order_id).padStart(4, '0')}</span>
+                                                <StatusBadge status={o.status} />
+                                            </div>
+                                            <div className="order-card-body">
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Customer</span>
+                                                    <Link to={`/customer/${o.customer_id}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>
+                                                        {o.customer_name}
+                                                    </Link>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Phone</span>
+                                                    <a href={`tel:${o.phone_number}`} style={{ color: 'var(--charcoal)', textDecoration: 'none' }}>{o.phone_number}</a>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Booking</span>
+                                                    <span>{formatDate(o.booking_date)}</span>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Delivery</span>
+                                                    <span style={{ color: isOverdue ? '#E65100' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
+                                                        {formatDate(o.delivery_date)}
+                                                        {isOverdue && ' ⚠'}
+                                                    </span>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Total</span>
+                                                    <strong>{`\u20b9${parseFloat(o.total_amount).toLocaleString('en-IN')}`}</strong>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Advance</span>
+                                                    <span style={{ color: '#2E7D32' }}>{`\u20b9${parseFloat(o.advance_paid).toLocaleString('en-IN')}`}</span>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Balance</span>
+                                                    <strong style={{ color: balanceAmt > 0 ? '#E65100' : '#2E7D32' }}>
+                                                        {`\u20b9${balanceAmt.toLocaleString('en-IN')}`}
+                                                    </strong>
+                                                </div>
+                                                <div className="order-card-row">
+                                                    <span className="order-card-label">Change Status</span>
+                                                    <select
+                                                        className="form-select"
+                                                        style={{ padding: '4px 8px', fontSize: 12, width: 115 }}
+                                                        value={o.status}
+                                                        disabled={updatingId === o.order_id}
+                                                        onChange={e => handleStatusChange(o.order_id, e.target.value)}
+                                                    >
+                                                        <option>Pending</option>
+                                                        <option>Ready</option>
+                                                        <option>Delivered</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="order-card-footer">
+                                                <Link to={`/bill/${o.order_id}`} className="btn btn-sm btn-outline">
+                                                    <Eye size={12} /> Bill
+                                                </Link>
+                                                {o.status === 'Delivered' && (
+                                                    <button
+                                                        className="btn btn-sm btn-outline"
+                                                        style={{ borderColor: '#2E7D32', color: '#2E7D32' }}
+                                                        onClick={() => handleWhatsAppReview(o)}
+                                                    >
+                                                        Review
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
         </div>

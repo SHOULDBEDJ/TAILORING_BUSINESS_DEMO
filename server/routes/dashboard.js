@@ -18,12 +18,18 @@ router.get('/', async (req, res) => {
         result.dueTodayOrders = dueTodayOrdersRs.rows;
         result.dueToday = dueTodayOrdersRs.rows.length;
 
-        // 2. Counts
-        const pendingRs = await db.execute("SELECT COUNT(*) as count FROM orders WHERE status = 'Pending'");
-        result.pendingCount = Number(pendingRs.rows[0].count) || 0;
+        // 2. Counts & Lists
+        const pendingRs = await db.execute(`SELECT o.*, c.name as customer_name, c.phone_number FROM orders o
+                                          JOIN customers c ON c.id = o.customer_id
+                                          WHERE o.status = 'Pending' ORDER BY o.delivery_date ASC`);
+        result.pendingOrders = pendingRs.rows;
+        result.pendingCount = pendingRs.rows.length;
 
-        const readyRs = await db.execute("SELECT COUNT(*) as count FROM orders WHERE status = 'Ready'");
-        result.readyCount = Number(readyRs.rows[0].count) || 0;
+        const readyRs = await db.execute(`SELECT o.*, c.name as customer_name, c.phone_number FROM orders o
+                                        JOIN customers c ON c.id = o.customer_id
+                                        WHERE o.status = 'Ready' ORDER BY o.delivery_date ASC`);
+        result.readyOrders = readyRs.rows;
+        result.readyCount = readyRs.rows.length;
 
         const earningsRs = await db.execute("SELECT SUM(total_amount) as total FROM orders WHERE status='Delivered'");
         result.totalEarnings = Number(earningsRs.rows[0].total) || 0;

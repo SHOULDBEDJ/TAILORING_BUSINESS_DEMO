@@ -43,7 +43,7 @@ app.use('/api/analytics', analyticsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'LM Ladies Tailor Backend is running 🧵' });
+    res.json({ status: 'ok', message: 'Demo Ladies Tailor Backend is running 🧵' });
 });
 
 // ─── Start ────────────────────────────────────────
@@ -52,7 +52,7 @@ module.exports = app;
 
 if (process.env.NODE_ENV !== 'production' || require.main === module) {
     app.listen(PORT, () => {
-        console.log(`\n🧵 LM Ladies Tailor Billing Server`);
+        console.log(`\n🧵 Demo Ladies Tailor Billing Server`);
         console.log(`   Running at → http://localhost:${PORT}`);
         console.log(`   Health     → http://localhost:${PORT}/api/health\n`);
     });

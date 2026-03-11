@@ -112,6 +112,16 @@ async function initDB() {
       console.log('✅ Added sleeves_round column to measurements table');
     } catch (e) { }
 
+    // Add assigned_worker and stitching_expense to orders table
+    try {
+      await db.execute('ALTER TABLE orders ADD COLUMN assigned_worker TEXT');
+      console.log('✅ Added assigned_worker column to orders table');
+    } catch (e) { }
+    try {
+      await db.execute('ALTER TABLE orders ADD COLUMN stitching_expense REAL NOT NULL DEFAULT 0');
+      console.log('✅ Added stitching_expense column to orders table');
+    } catch (e) { }
+
     console.log('✅ Database Initialized (' + (isLocal ? 'Local' : 'Cloud') + ')');
   } catch (err) {
     console.error('❌ Database Initialization Error Details:', err);

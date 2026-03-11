@@ -29,6 +29,7 @@ export default function CustomerSearch({ onMenuClick }) {
     const [searched, setSearched] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
+    const isMobile = window.innerWidth < 768;
 
     useEffect(() => {
         if (id) {
@@ -66,7 +67,7 @@ export default function CustomerSearch({ onMenuClick }) {
     }
 
     async function handleSelect(customer) {
-        setIsEditing(false); // Reset editing mode when selecting a new customer
+        setIsEditing(false);
         try {
             const res = await api.get(`/customers/${customer.id}`);
             setSelected(res.data);
@@ -77,16 +78,10 @@ export default function CustomerSearch({ onMenuClick }) {
 
     function handleStartEdit() {
         setEditForm({
-            m_length: selected.m_length,
-            shoulder: selected.shoulder,
-            chest: selected.chest,
-            waist: selected.waist,
-            dot: selected.dot,
-            back_neck: selected.back_neck,
-            front_neck: selected.front_neck,
-            sleeves_length: selected.sleeves_length,
-            armhole: selected.armhole,
-            chest_distance: selected.chest_distance,
+            m_length: selected.m_length, shoulder: selected.shoulder, chest: selected.chest,
+            waist: selected.waist, dot: selected.dot, back_neck: selected.back_neck,
+            front_neck: selected.front_neck, sleeves_length: selected.sleeves_length,
+            armhole: selected.armhole, chest_distance: selected.chest_distance,
             sleeves_round: selected.sleeves_round
         });
         setIsEditing(true);
@@ -101,7 +96,6 @@ export default function CustomerSearch({ onMenuClick }) {
         setLoading(true);
         try {
             await api.put(`/customers/${selected.id}/measurements`, editForm);
-            // Refresh selected customer data to see changes
             const res = await api.get(`/customers/${selected.id}`);
             setSelected(res.data);
             setIsEditing(false);
@@ -125,7 +119,7 @@ export default function CustomerSearch({ onMenuClick }) {
                         <div className="topbar-subtitle">Find or view customer profile</div>
                     </div>
                 </div>
-                <Link to="/new-order" className="btn btn-primary"><Plus size={16} /> New Order</Link>
+                <Link to="/new-order" className="btn btn-primary"><Plus size={16} /> <span className="hide-mobile">New Order</span></Link>
             </div>
 
             <div className="page-container">
@@ -133,8 +127,8 @@ export default function CustomerSearch({ onMenuClick }) {
                 <div className="card mb-24">
                     <div className="card-body">
                         <form onSubmit={handleSearch}>
-                            <div className="flex gap-12">
-                                <div className="input-prefix" style={{ flex: 1 }}>
+                            <div className="flex gap-12" style={{ flexWrap: 'wrap' }}>
+                                <div className="input-prefix" style={{ flex: 1, minWidth: 200 }}>
                                     <span className="prefix-symbol"><Search size={15} /></span>
                                     <input
                                         type="text"
@@ -168,7 +162,29 @@ export default function CustomerSearch({ onMenuClick }) {
                                     <Plus size={16} /> Create New Order
                                 </Link>
                             </div>
+                        ) : isMobile ? (
+                            /* Mobile: card list */
+                            <div style={{ padding: '8px 0' }}>
+                                {results.map(c => (
+                                    <div key={c.id} onClick={() => handleSelect(c)} style={{ padding: '14px 16px', borderBottom: '1px solid var(--gray-light)', cursor: 'pointer' }}>
+                                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+                                            <User size={13} style={{ marginRight: 5, color: 'var(--gold)' }} />
+                                            {c.name}
+                                        </div>
+                                        <div style={{ fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
+                                            <Phone size={12} style={{ marginRight: 4 }} />{c.phone_number}
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: 11, color: 'var(--gray)' }}>Since {formatDate(c.created_at)}</span>
+                                            <button className="btn btn-sm btn-outline" onClick={e => { e.stopPropagation(); handleSelect(c); }}>
+                                                <Eye size={12} /> View
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         ) : (
+                            /* Desktop: table */
                             <div className="table-container" style={{ border: 'none' }}>
                                 <table>
                                     <thead>
@@ -206,6 +222,7 @@ export default function CustomerSearch({ onMenuClick }) {
                             ← Back to results
                         </button>
 
+                        {/* grid-2 collapses on mobile via CSS */}
                         <div className="grid-2 gap-16 mb-24">
                             {/* Info card */}
                             <div className="card">
@@ -219,7 +236,8 @@ export default function CustomerSearch({ onMenuClick }) {
                                             {selected.name}
                                         </div>
                                         <div className="flex gap-8 mt-4" style={{ color: 'var(--gray)', fontSize: 13 }}>
-                                            <Phone size={14} /> {selected.phone_number}
+                                            <Phone size={14} />
+                                            <a href={`tel:${selected.phone_number}`} style={{ color: 'var(--gray)', textDecoration: 'none' }}>{selected.phone_number}</a>
                                         </div>
                                         <div style={{ fontSize: 11, color: 'var(--gray)', marginTop: 6 }}>
                                             Customer since {formatDate(selected.created_at)}
@@ -260,13 +278,9 @@ export default function CustomerSearch({ onMenuClick }) {
                                                             value={editForm[key] || ''}
                                                             onChange={e => setEditForm({ ...editForm, [key]: e.target.value })}
                                                             style={{
-                                                                width: 70,
-                                                                height: 24,
-                                                                fontSize: 13,
-                                                                border: '1px solid var(--gold-pale)',
-                                                                borderRadius: 4,
-                                                                padding: '0 4px',
-                                                                background: 'white'
+                                                                width: 70, height: 24, fontSize: 13,
+                                                                border: '1px solid var(--gold-pale)', borderRadius: 4,
+                                                                padding: '0 4px', background: 'white'
                                                             }}
                                                         />
                                                     ) : (
@@ -284,7 +298,7 @@ export default function CustomerSearch({ onMenuClick }) {
                             </div>
                         </div>
 
-                        {/* Order history */}
+                        {/* Order history — horizontal scroll on mobile */}
                         <div className="card">
                             <div className="card-header">
                                 <h3 className="card-title flex gap-8"><ShoppingBag size={18} color="var(--gold)" /> Order History</h3>
@@ -294,6 +308,27 @@ export default function CustomerSearch({ onMenuClick }) {
                             </div>
                             {!selected.orders?.length ? (
                                 <div className="empty-state">No orders found for this customer.</div>
+                            ) : isMobile ? (
+                                /* Mobile: mini cards */
+                                <div>
+                                    {selected.orders.map(o => (
+                                        <div key={o.order_id} style={{ padding: '14px 16px', borderBottom: '1px solid var(--gray-light)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                                <span style={{ fontWeight: 700, color: 'var(--maroon)' }}>#{String(o.order_id).padStart(4, '0')}</span>
+                                                <span className={`badge badge-${o.status.toLowerCase()}`}>{o.status}</span>
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
+                                                <span>Booking: <strong style={{ color: 'var(--charcoal)' }}>{formatDate(o.booking_date)}</strong></span>
+                                                <span>Delivery: <strong style={{ color: 'var(--charcoal)' }}>{formatDate(o.delivery_date)}</strong></span>
+                                                <span>Total: <strong style={{ color: 'var(--charcoal)' }}>{`\u20b9${parseFloat(o.total_amount).toLocaleString('en-IN')}`}</strong></span>
+                                                <span>Balance: <strong style={{ color: parseFloat(o.balance_amount) > 0 ? '#E65100' : '#2E7D32' }}>{`\u20b9${parseFloat(o.balance_amount).toLocaleString('en-IN')}`}</strong></span>
+                                            </div>
+                                            <Link to={`/bill/${o.order_id}`} className="btn btn-sm btn-outline">
+                                                <Eye size={12} /> Bill
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : (
                                 <div className="table-container" style={{ border: 'none' }}>
                                     <table>

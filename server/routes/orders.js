@@ -5,7 +5,7 @@ const { db } = require('../db');
 // POST /api/orders
 router.post('/', async (req, res) => {
     try {
-        const { customer_id, booking_date, delivery_date, advance_paid, notes, services, measurement_type } = req.body;
+        const { customer_id, booking_date, delivery_date, advance_paid, notes, services, measurement_type, assigned_worker, stitching_expense } = req.body;
         if (!customer_id || !booking_date || !delivery_date)
             return res.status(400).json({ error: 'customer_id, booking_date, delivery_date are required' });
         if (!services || services.length === 0)
@@ -18,9 +18,9 @@ router.post('/', async (req, res) => {
         // Use batch for transaction-like atomic behavior
         const batchOps = [
             {
-                sql: `INSERT INTO orders (customer_id, booking_date, delivery_date, total_amount, advance_paid, balance_amount, notes, measurement_type)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                args: [customer_id, booking_date, delivery_date, total_amount, advance, balance_amount, notes || null, measurement_type || 'Body']
+                sql: `INSERT INTO orders (customer_id, booking_date, delivery_date, total_amount, advance_paid, balance_amount, notes, measurement_type, assigned_worker, stitching_expense)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [customer_id, booking_date, delivery_date, total_amount, advance, balance_amount, notes || null, measurement_type || 'Body', assigned_worker || null, parseFloat(stitching_expense) || 0]
             }
         ];
 
@@ -47,14 +47,21 @@ router.post('/', async (req, res) => {
 // GET /api/orders
 router.get('/', async (req, res) => {
     try {
-        const { status, date, search } = req.query;
-        let query = `SELECT o.*, c.name as customer_name, c.phone_number
-        FROM orders o JOIN customers c ON c.id = o.customer_id WHERE 1=1`;
+        const { status, date, search, worker } = req.query;
+        let query = `SELECT o.*, c.name as customer_name, c.phone_number, 
+                           m.length as m_length, m.shoulder, m.chest, m.waist, m.dot, 
+                           m.back_neck, m.front_neck, m.sleeves_length, m.armhole, 
+                           m.chest_distance, m.sleeves_round
+        FROM orders o 
+        JOIN customers c ON c.id = o.customer_id 
+        LEFT JOIN measurements m ON m.customer_id = c.id
+        WHERE 1=1`;
         const params = [];
 
         if (status && status !== 'All') { query += ' AND o.status = ?'; params.push(status); }
         if (date) { query += ' AND o.delivery_date = ?'; params.push(date); }
         if (search) { query += ' AND (c.name LIKE ? OR c.phone_number LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
+        if (worker) { query += ' AND o.assigned_worker = ?'; params.push(worker); }
 
         query += ' ORDER BY o.created_at DESC';
 
@@ -111,10 +118,27 @@ router.put('/:id/status', async (req, res) => {
     }
 });
 
+// PUT /api/orders/:id/expense
+router.put('/:id/expense', async (req, res) => {
+    try {
+        const { stitching_expense } = req.body;
+        if (stitching_expense === undefined) {
+            return res.status(400).json({ error: 'stitching_expense required' });
+        }
+        await db.execute({
+            sql: 'UPDATE orders SET stitching_expense = ? WHERE order_id = ?',
+            args: [parseFloat(stitching_expense) || 0, req.params.id]
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // PUT /api/orders/:id
 router.put('/:id', async (req, res) => {
     try {
-        const { booking_date, delivery_date, advance_paid, notes, services, measurement_type } = req.body;
+        const { booking_date, delivery_date, advance_paid, notes, services, measurement_type, assigned_worker, stitching_expense } = req.body;
 
         const currentRs = await db.execute({
             sql: 'SELECT * FROM orders WHERE order_id = ?',
@@ -135,7 +159,7 @@ router.put('/:id', async (req, res) => {
         }
 
         await db.execute({
-            sql: `UPDATE orders SET booking_date=?,delivery_date=?,advance_paid=?,total_amount=?,balance_amount=?,notes=?,measurement_type=?,status=?
+            sql: `UPDATE orders SET booking_date=?,delivery_date=?,advance_paid=?,total_amount=?,balance_amount=?,notes=?,measurement_type=?,status=?,assigned_worker=?,stitching_expense=?
                 WHERE order_id=?`,
             args: [
                 booking_date || order.booking_date,
@@ -146,6 +170,8 @@ router.put('/:id', async (req, res) => {
                 notes !== undefined ? notes : order.notes,
                 measurement_type || order.measurement_type,
                 finalStatus,
+                assigned_worker !== undefined ? assigned_worker : order.assigned_worker,
+                stitching_expense !== undefined ? parseFloat(stitching_expense) : order.stitching_expense,
                 req.params.id
             ]
         });

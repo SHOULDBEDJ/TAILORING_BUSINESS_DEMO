@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, ChevronDown, User, Ruler, Scissors, CreditCard, Search, Menu, Image as ImageIcon, X, Mic, Square, Trash } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, User, Ruler, Scissors, CreditCard, Search, Menu, Image as ImageIcon, Camera, X, Mic, Square, Trash } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
@@ -22,7 +22,7 @@ const MEASUREMENT_FIELDS = [
 
 const initialService = () => ({ service_type: 'Blouse', quantity: 1, price: '', custom_type: '' });
 
-export default function NewOrder({ onMenuClick }) {
+export default function NewOrder({ onMenuClick, auth }) {
     const navigate = useNavigate();
     const phoneRef = useRef();
 
@@ -33,9 +33,10 @@ export default function NewOrder({ onMenuClick }) {
     const [customerId, setCustomerId] = useState(null);
     const [customerFound, setCustomerFound] = useState(false);
 
-    // Dates
+    // Dates & Assignment
     const [bookingDate, setBookingDate] = useState(today);
     const [deliveryDate, setDeliveryDate] = useState('');
+    const [assignedWorker, setAssignedWorker] = useState('Praveen');
 
     // Measurements
     const [measurementType, setMeasurementType] = useState('Body'); // 'Body' or 'Sample'
@@ -61,6 +62,7 @@ export default function NewOrder({ onMenuClick }) {
     const [audioUrl, setAudioUrl] = useState(null);
 
     const mediaRecorderRef = useRef(null);
+    const cameraInputRef = useRef(null);
     const audioChunksRef = useRef([]);
     const timerRef = useRef(null);
 
@@ -256,6 +258,7 @@ export default function NewOrder({ onMenuClick }) {
                 notes: customer.notes || '',
                 measurement_type: measurementType,
                 services: svcList,
+                assigned_worker: assignedWorker,
             });
             const createdOrderId = orderRes.data.order_id;
 
@@ -274,7 +277,11 @@ export default function NewOrder({ onMenuClick }) {
             }
 
             toast.success('Order created successfully!');
-            navigate(`/bill/${createdOrderId}`);
+            if (auth?.role === 'Worker') {
+                navigate('/');
+            } else {
+                navigate(`/bill/${createdOrderId}`);
+            }
         } catch (err) {
             toast.error(err.response?.data?.error || 'Failed to create order');
         } finally {
@@ -392,6 +399,8 @@ export default function NewOrder({ onMenuClick }) {
                                         onChange={e => setDeliveryDate(e.target.value)} min={bookingDate} required />
                                 </div>
                             </div>
+
+
                         </div>
                     </div>
 
@@ -537,19 +546,39 @@ export default function NewOrder({ onMenuClick }) {
                             </span>
                         </div>
                         <div className="card-body">
-                            <div className="form-group" style={{ marginBottom: 16 }}>
-                                <label className="form-label">Upload Fabric or Design Photos</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={handleImageUpload}
-                                    className="form-input"
-                                    style={{ padding: '8px' }}
-                                />
-                                <p style={{ fontSize: 12, color: 'var(--gray)', marginTop: 4 }}>Images are automatically compressed to save space.</p>
+                            <div className="grid-2 gap-16" style={{ marginBottom: 16 }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Gallery Upload</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleImageUpload}
+                                        className="form-input"
+                                        style={{ padding: '8px' }}
+                                    />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Camera Capture</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={handleImageUpload}
+                                        ref={cameraInputRef}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline"
+                                        style={{ width: '100%', height: '42px', display: 'flex', justifyContent: 'center', gap: 8, borderColor: 'var(--gold)', color: 'var(--gold)' }}
+                                        onClick={() => cameraInputRef.current?.click()}
+                                    >
+                                        <Camera size={18} /> Take Photo
+                                    </button>
+                                </div>
                             </div>
-
+                            <p style={{ fontSize: 12, color: 'var(--gray)', marginTop: 4 }}>Images are automatically compressed to save space.</p>
                             {images.length > 0 && (
                                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                                     {images.map((src, i) => (

@@ -84,7 +84,7 @@ export default function BillPreview({ onMenuClick }) {
         }
 
         const msg = encodeURIComponent(
-            `*LM Ladies Tailor - Bill*\n\n` +
+            `*Demo Ladies Tailor - Bill*\n\n` +
             `Customer: ${order.customer_name}\n` +
             `Phone: ${order.phone_number}\n` +
             `Order #${String(order.order_id).padStart(4, '0')}\n` +
@@ -95,7 +95,7 @@ export default function BillPreview({ onMenuClick }) {
             `\n\n*Total: \u20b9${parseFloat(order.total_amount).toFixed(2)}*\n` +
             `Advance Paid: \u20b9${parseFloat(order.advance_paid).toFixed(2)}\n` +
             `*Balance Due: \u20b9${parseFloat(order.balance_amount).toFixed(2)}*\n\n` +
-            `_LM Ladies Tailor | Dajibanpeth, Beside Ganesh Temple, Hubli | 9916562127_`
+            `_Demo Ladies Tailor | Dajibanpeth, Beside Ganesh Temple, Hubli | 9916562127_`
         );
         window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
     }
@@ -110,12 +110,12 @@ export default function BillPreview({ onMenuClick }) {
 
         const msg = encodeURIComponent(
             `Dear ${order.customer_name},\n\n` +
-            `Thank you for choosing L.M. Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
+            `Thank you for choosing Demo Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
             `We would love to hear your feedback. Your review helps us improve and also supports our small business.\n\n` +
             `If you have a moment, please leave us a review on Google:\n` +
             `https://g.co/kgs/LUPXvNh\n\n` +
             `Thank you for your support!\n` +
-            `– L.M. Ladies Tailor`
+            `– Demo Ladies Tailor`
         );
         window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
     }
@@ -197,7 +197,7 @@ export default function BillPreview({ onMenuClick }) {
                                         Receipt
                                     </div>
                                     <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: 'var(--gold)', letterSpacing: '0.1em' }}>
-                                        LM LADIES TAILOR
+                                        DEMO LADIES TAILOR
                                     </h1>
                                     <p style={{ fontSize: 11, marginTop: 4 }}>✦ Luxury in Every Stitch ✦</p>
                                 </div>
@@ -315,7 +315,7 @@ export default function BillPreview({ onMenuClick }) {
 
                             {/* Footer */}
                             <div style={{ background: 'var(--maroon-dark)', color: 'rgba(198,167,94,0.6)', textAlign: 'center', padding: '14px 20px', fontSize: 11, borderTop: '2px solid var(--gold)' }}>
-                                <div>Thank you for choosing LM Ladies Tailor!</div>
+                                <div>Thank you for choosing Demo Ladies Tailor!</div>
                                 <div style={{ marginTop: 3, fontSize: 10 }}>This is a computer-generated receipt. No signature required.</div>
                             </div>
                         </div>

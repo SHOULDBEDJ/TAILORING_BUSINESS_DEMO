@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Menu, ChevronDown, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Menu, ChevronDown, ChevronRight, Download, Star, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
@@ -13,44 +13,42 @@ export default function Analytics({ onMenuClick }) {
         total_income: 0, total_expense: 0, net_profit: 0
     });
     const [expenses, setExpenses] = useState([]);
+    const [topServices, setTopServices] = useState([]);
+    const [topCustomers, setTopCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [expandedSections, setExpandedSections] = useState({
-        today: true,
-        month: true,
-        year: true,
-        allTime: false
+        today: true, month: true, year: true, allTime: false
     });
 
     const toggleSection = (section) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
-    // Form state
     const [form, setForm] = useState({
         date: new Date().toISOString().split('T')[0],
-        category: 'PRAVEEN',
-        amount: '',
-        description: ''
+        category: 'PRAVEEN', amount: '', description: ''
     });
 
     const fetchData = () => {
         setLoading(true);
         Promise.all([
             api.get('/analytics/summary'),
-            api.get('/analytics/expenses')
-        ]).then(([sumRes, expRes]) => {
+            api.get('/analytics/expenses'),
+            api.get('/analytics/top-services'),
+            api.get('/analytics/top-customers')
+        ]).then(([sumRes, expRes, tsRes, tcRes]) => {
             setSummary(sumRes.data);
             setExpenses(expRes.data);
+            setTopServices(tsRes.data);
+            setTopCustomers(tcRes.data);
         }).catch(err => {
             toast.error('Failed to load analytics');
             console.error(err);
         }).finally(() => setLoading(false));
     };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
     const handleAddExpense = async (e) => {
         e.preventDefault();
@@ -75,21 +73,42 @@ export default function Analytics({ onMenuClick }) {
         }
     };
 
+    const handleExport = () => {
+        const header = "Date,Category,Amount,Description\n";
+        const csv = expenses.map(e => `${new Date(e.date).toLocaleDateString('en-IN')},"${e.category}",${e.amount},"${e.description || ''}"`).join('\n');
+        const blob = new Blob([header + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `expenses_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Export successful");
+    };
+
     function StatCard({ label, value, colorClass, icon: Icon }) {
         return (
-            <div className={`card ${colorClass}`} style={{ flex: 1, minWidth: 200 }}>
-                <div className="card-body" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ padding: 12, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', color: '#fff' }}>
-                        <Icon size={24} />
+            <div className={`card ${colorClass} analytics-stat`} style={{ flex: 1, minWidth: 160 }}>
+                <div className="card-body" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px' }}>
+                    <div style={{ padding: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', color: '#fff', flexShrink: 0 }}>
+                        <Icon size={22} />
                     </div>
                     <div>
-                        <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 500 }}>{label}</div>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: '#fff' }}>₹{value.toLocaleString('en-IN')}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 500 }}>{label}</div>
+                        <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>₹{value.toLocaleString('en-IN')}</div>
                     </div>
                 </div>
             </div>
         );
     }
+
+    const sectionConfig = [
+        { key: 'today', title: 'Today Overview', income: 'today_income', expense: 'today_expense', profit: 'today_profit' },
+        { key: 'month', title: 'This Month', income: 'monthly_income', expense: 'monthly_expense', profit: 'monthly_profit' },
+        { key: 'year', title: 'This Year', income: 'yearly_income', expense: 'yearly_expense', profit: 'yearly_profit' },
+        { key: 'allTime', title: 'All Time', income: 'total_income', expense: 'total_expense', profit: 'net_profit', incomeLabel: 'Total Income', expenseLabel: 'Total Expenses', profitLabel: 'Net Profit' },
+    ];
 
     return (
         <div>
@@ -100,92 +119,80 @@ export default function Analytics({ onMenuClick }) {
                     </button>
                     <div>
                         <div className="topbar-title">Analytics</div>
-                        <div className="topbar-subtitle">Income & Expense Tracking</div>
+                        <div className="topbar-subtitle">Income &amp; Expense Tracking</div>
                     </div>
                 </div>
+                <button className="btn btn-outline" onClick={handleExport}>
+                    <Download size={16} /> <span className="hide-mobile">Export CSV</span>
+                </button>
             </div>
 
             <div className="page-container">
-                {/* Summary Cards */}
-                {/* Summary Cards */}
+                {/* Summary Sections */}
                 <div style={{ marginBottom: 24 }}>
-                    {/* Today Section */}
-                    <div style={{ marginBottom: 16 }}>
-                        <div
-                            className="flex-between"
-                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
-                            onClick={() => toggleSection('today')}
-                        >
-                            <h3 className="card-title" style={{ margin: 0 }}>Today Overview</h3>
-                            {expandedSections.today ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                    {sectionConfig.map(({ key, title, income, expense, profit, incomeLabel, expenseLabel, profitLabel }) => (
+                        <div key={key} style={{ marginBottom: 16 }}>
+                            <div
+                                className="flex-between"
+                                style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
+                                onClick={() => toggleSection(key)}
+                            >
+                                <h3 className="card-title" style={{ margin: 0 }}>{title}</h3>
+                                {expandedSections[key] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                            </div>
+                            {expandedSections[key] && (
+                                <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+                                    <StatCard label={incomeLabel || 'Income'} value={summary[income] || 0} colorClass="bg-maroon" icon={TrendingUp} />
+                                    <StatCard label={expenseLabel || 'Expenses'} value={summary[expense] || 0} colorClass="bg-red" icon={TrendingDown} />
+                                    <StatCard label={profitLabel || 'Profit'} value={summary[profit] || 0} colorClass="bg-green" icon={DollarSign} />
+                                </div>
+                            )}
                         </div>
-                        {expandedSections.today && (
-                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-                                <StatCard label="Income" value={summary.today_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                                <StatCard label="Expenses" value={summary.today_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                                <StatCard label="Profit" value={summary.today_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    ))}
+                </div>
+
+                {/* Top Services & Top Customers — grid-2 collapses on mobile */}
+                <div className="grid-2 mb-24">
+                    <div className="card">
+                        <div className="card-header"><h3 className="card-title flex gap-8"><Star size={18} color="var(--gold)" /> Top Services</h3></div>
+                        {topServices.length === 0 ? (
+                            <div className="empty-state" style={{ padding: '20px 24px' }}>No data yet</div>
+                        ) : (
+                            <div>
+                                {topServices.map((t, i) => (
+                                    <div key={i} style={{ padding: '10px 16px', borderBottom: i < topServices.length - 1 ? '1px solid var(--gray-light)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{t.service_type}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--gray)' }}>{t.count} orders</div>
+                                        </div>
+                                        <strong style={{ color: '#2E7D32' }}>₹{parseFloat(t.revenue).toLocaleString('en-IN')}</strong>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
 
-                    {/* This Month Section */}
-                    <div style={{ marginBottom: 16 }}>
-                        <div
-                            className="flex-between"
-                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
-                            onClick={() => toggleSection('month')}
-                        >
-                            <h3 className="card-title" style={{ margin: 0 }}>This Month</h3>
-                            {expandedSections.month ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                        </div>
-                        {expandedSections.month && (
-                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-                                <StatCard label="Income" value={summary.monthly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                                <StatCard label="Expenses" value={summary.monthly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                                <StatCard label="Profit" value={summary.monthly_profit || 0} colorClass="bg-green" icon={DollarSign} />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* This Year Section */}
-                    <div style={{ marginBottom: 16 }}>
-                        <div
-                            className="flex-between"
-                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
-                            onClick={() => toggleSection('year')}
-                        >
-                            <h3 className="card-title" style={{ margin: 0 }}>This Year</h3>
-                            {expandedSections.year ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                        </div>
-                        {expandedSections.year && (
-                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-                                <StatCard label="Income" value={summary.yearly_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                                <StatCard label="Expenses" value={summary.yearly_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                                <StatCard label="Profit" value={summary.yearly_profit || 0} colorClass="bg-green" icon={DollarSign} />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* All Time Section */}
-                    <div style={{ marginBottom: 16 }}>
-                        <div
-                            className="flex-between"
-                            style={{ cursor: 'pointer', padding: '12px 16px', background: 'var(--ivory)', borderRadius: 8, border: '1px solid var(--gray-light)' }}
-                            onClick={() => toggleSection('allTime')}
-                        >
-                            <h3 className="card-title" style={{ margin: 0 }}>All Time</h3>
-                            {expandedSections.allTime ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                        </div>
-                        {expandedSections.allTime && (
-                            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-                                <StatCard label="Total Income" value={summary.total_income || 0} colorClass="bg-maroon" icon={TrendingUp} />
-                                <StatCard label="Total Expenses" value={summary.total_expense || 0} colorClass="bg-red" icon={TrendingDown} />
-                                <StatCard label="Net Profit" value={summary.net_profit || 0} colorClass="bg-green" icon={DollarSign} />
+                    <div className="card">
+                        <div className="card-header"><h3 className="card-title flex gap-8"><Award size={18} color="var(--gold)" /> Top Customers</h3></div>
+                        {topCustomers.length === 0 ? (
+                            <div className="empty-state" style={{ padding: '20px 24px' }}>No data yet</div>
+                        ) : (
+                            <div>
+                                {topCustomers.map(c => (
+                                    <div key={c.id} style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--gray)' }}>{c.phone_number} · {c.order_count} orders</div>
+                                        </div>
+                                        <strong style={{ color: '#2E7D32' }}>₹{parseFloat(c.total_spent).toLocaleString('en-IN')}</strong>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
                 </div>
 
+                {/* Add Expense + Expense History — grid-2 collapses on mobile */}
                 <div className="grid-2">
                     {/* Add Expense Form */}
                     <div className="card">
@@ -220,43 +227,40 @@ export default function Analytics({ onMenuClick }) {
                         </div>
                     </div>
 
-                    {/* Expense History List */}
+                    {/* Expense History */}
                     <div className="card">
                         <div className="card-header"><h3 className="card-title">Recent Expenses</h3></div>
                         <div className="card-body" style={{ padding: 0 }}>
                             {loading ? <div className="spinner" style={{ margin: 20 }} /> : (
-                                <div className="table-container" style={{ border: 'none', maxHeight: 400, overflowY: 'auto' }}>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Category</th>
-                                                <th>Amount</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {expenses.length === 0 ? (
-                                                <tr><td colSpan="4" style={{ textAlign: 'center', padding: 20 }}>No expenses recorded</td></tr>
-                                            ) : expenses.map(e => (
-                                                <tr key={e.id}>
-                                                    <td style={{ fontSize: 13 }}>{new Date(e.date).toLocaleDateString('en-IN')}</td>
-                                                    <td>
-                                                        <div style={{ fontWeight: 600 }}>{e.category}</div>
-                                                        <div style={{ fontSize: 11, color: 'var(--gray)' }}>{e.description}</div>
-                                                    </td>
-                                                    <td style={{ color: '#d32f2f', fontWeight: 600 }}>₹{parseFloat(e.amount).toLocaleString('en-IN')}</td>
-                                                    <td style={{ textAlign: 'right' }}>
-                                                        <button type="button" className="btn btn-ghost" style={{ color: 'var(--gray)' }}
+                                expenses.length === 0 ? (
+                                    <div className="empty-state">No expenses recorded</div>
+                                ) : (
+                                    <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                                        {expenses.map(e => (
+                                            <div key={e.type === 'stitching' ? `s_${e.id}` : `e_${e.id}`}
+                                                style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {e.category || 'Expense'}
+                                                    </div>
+                                                    <div style={{ fontSize: 11, color: 'var(--gray)' }}>
+                                                        {new Date(e.date).toLocaleDateString('en-IN')}
+                                                        {e.description && ` · ${e.description}`}
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                                    <strong style={{ color: '#d32f2f' }}>₹{parseFloat(e.amount).toLocaleString('en-IN')}</strong>
+                                                    {e.type !== 'stitching' && (
+                                                        <button type="button" className="btn btn-ghost" style={{ color: 'var(--gray)', padding: 4 }}
                                                             onClick={() => handleDelete(e.id)}>
                                                             <Trash2 size={14} />
                                                         </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
                             )}
                         </div>
                     </div>

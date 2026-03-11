@@ -39,7 +39,7 @@ router.get('/:orderId', async (req, res) => {
 
         // Shop Name & Details
         doc.font('Helvetica-Bold').fontSize(20).fillColor(GOLD)
-            .text('LM LADIES TAILOR', margin, 18, { align: 'center', width: contentW });
+            .text('DEMO LADIES TAILOR', margin, 18, { align: 'center', width: contentW });
         doc.font('Helvetica').fontSize(8).fillColor('#C6A75E')
             .text('Luxury in Every Stitch', margin, 42, { align: 'center', width: contentW });
         doc.fontSize(8).fillColor('#D4C4A0')
@@ -134,7 +134,7 @@ router.get('/:orderId', async (req, res) => {
         doc.rect(0, fY, pageWidth, 45).fill(DARK);
         doc.rect(0, fY, pageWidth, 2).fill(GOLD);
         doc.font('Helvetica').fontSize(7).fillColor('#9A9090')
-            .text('Thank you for choosing LM Ladies Tailor!', margin, fY + 8, { align: 'center', width: contentW });
+            .text('Thank you for choosing Demo Ladies Tailor!', margin, fY + 8, { align: 'center', width: contentW });
         doc.fontSize(6.5).fillColor('#6A6060')
             .text('Computer-generated bill. No signature required.', margin, fY + 22, { align: 'center', width: contentW });
 
