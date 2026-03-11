@@ -23,10 +23,10 @@ export default function Login({ setAuth }) {
             }
         } else {
             // Worker login is unrestricted for Praveen
-            const user = { role: 'Worker', name: 'Praveen' };
+            const user = { role: 'Worker', name: 'Worker 1' };
             localStorage.setItem('tailor_auth', JSON.stringify(user));
             setAuth(user);
-            toast.success('Logged in as Praveen');
+            toast.success('Logged in as Worker 1');
             navigate('/');
         }
     };
@@ -88,7 +88,7 @@ export default function Login({ setAuth }) {
                                     <input
                                         type="text"
                                         className="form-input"
-                                        value="Praveen"
+                                        value="Worker 1"
                                         disabled
                                         style={{ border: 'none', background: 'transparent', color: 'var(--gray)' }}
                                     />

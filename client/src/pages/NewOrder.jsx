@@ -36,7 +36,7 @@ export default function NewOrder({ onMenuClick, auth }) {
     // Dates & Assignment
     const [bookingDate, setBookingDate] = useState(today);
     const [deliveryDate, setDeliveryDate] = useState('');
-    const [assignedWorker, setAssignedWorker] = useState('Praveen');
+    const [assignedWorker, setAssignedWorker] = useState('Worker 1');
 
     // Measurements
     const [measurementType, setMeasurementType] = useState('Body'); // 'Body' or 'Sample'
