@@ -20,6 +20,8 @@ const MEASUREMENT_FIELDS = [
     { key: 'sleeves_round', label: 'Sleeves Round' },
 ];
 
+let searchTimeout;
+
 const initialService = () => ({ service_type: 'Blouse', quantity: 1, price: '', custom_type: '' });
 
 export default function NewOrder({ onMenuClick, auth }) {
@@ -69,6 +71,16 @@ export default function NewOrder({ onMenuClick, auth }) {
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
 
+    // Auto-search when phone reaches 10 digits
+    useEffect(() => {
+        if (customer.phone_number?.length === 10 && !customerFound) {
+            handlePhoneSearch(customer.phone_number);
+        } else if (customer.phone_number?.length < 10 && customerFound) {
+            setCustomerFound(false);
+            setCustomerId(null);
+        }
+    }, [customer.phone_number]);
+
     // ── Computed totals ───────────────────────────────
     const totalAmount = services.reduce((s, svc) => {
         const qty = parseFloat(svc.quantity) || 0;
@@ -80,14 +92,15 @@ export default function NewOrder({ onMenuClick, auth }) {
     const balance = totalAmount - advance;
 
     // ── Customer lookup ───────────────────────────────
-    async function handlePhoneSearch() {
-        if (!customer.phone_number || customer.phone_number.length < 10) {
-            toast.error('Enter a valid 10-digit phone number');
+    async function handlePhoneSearch(forcedPhone) {
+        const phone = forcedPhone || customer.phone_number;
+        if (!phone || phone.length < 10) {
+            if (!forcedPhone) toast.error('Enter a valid 10-digit phone number');
             return;
         }
         setSearchLoading(true);
         try {
-            const res = await api.get(`/customers/search?phone=${customer.phone_number}`);
+            const res = await api.get(`/customers/search?phone=${phone}`);
             if (res.data && res.data.length > 0) {
                 const found = res.data[0];
                 setCustomerId(found.id);
