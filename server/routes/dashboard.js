@@ -6,6 +6,10 @@ const { db } = require('../db');
 router.get('/', async (req, res) => {
     try {
         const today = new Date().toISOString().split('T')[0];
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const tomorrow = tomorrowDate.toISOString().split('T')[0];
+        
         const result = {};
 
         // 1. Due Today Orders
@@ -17,6 +21,15 @@ router.get('/', async (req, res) => {
         });
         result.dueTodayOrders = dueTodayOrdersRs.rows;
         result.dueToday = dueTodayOrdersRs.rows.length;
+
+        // 1b. Due Tomorrow Orders
+        const dueTomorrowOrdersRs = await db.execute({
+            sql: `SELECT o.*, c.name as customer_name, c.phone_number FROM orders o
+                  JOIN customers c ON c.id = o.customer_id
+                  WHERE o.delivery_date = ? AND o.status != 'Delivered' ORDER BY o.delivery_date ASC`,
+            args: [tomorrow]
+        });
+        result.dueTomorrowOrders = dueTomorrowOrdersRs.rows;
 
         // 2. Counts & Lists
         const pendingRs = await db.execute(`SELECT o.*, c.name as customer_name, c.phone_number FROM orders o

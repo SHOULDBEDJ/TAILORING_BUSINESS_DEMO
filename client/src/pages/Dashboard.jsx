@@ -64,20 +64,27 @@ export default function Dashboard({ onMenuClick }) {
         api.get('/dashboard')
             .then(r => {
                 setData(r.data);
-                if (!notifiedRef.current && r.data.dueTodayOrders?.length > 0) {
-                    r.data.dueTodayOrders.forEach(order => {
-                        toast(`🚚 ${order.customer_name}'s delivery is due today!`, {
-                            duration: 6000,
-                            icon: '🗓️',
-                            style: {
-                                borderRadius: '10px',
-                                background: '#6A1E2E',
-                                color: '#fff',
-                                fontSize: '14px',
-                                fontWeight: '600'
-                            },
+                if (!notifiedRef.current) {
+                    // Due Today
+                    if (r.data.dueTodayOrders?.length > 0) {
+                        r.data.dueTodayOrders.forEach(order => {
+                            toast(`🚚 ${order.customer_name}'s delivery is due today!`, {
+                                duration: 6000,
+                                icon: '🗓️',
+                                style: { borderRadius: '10px', background: '#6A1E2E', color: '#fff', fontSize: '14px', fontWeight: '600' },
+                            });
                         });
-                    });
+                    }
+                    // Due Tomorrow
+                    if (r.data.dueTomorrowOrders?.length > 0) {
+                        r.data.dueTomorrowOrders.forEach(order => {
+                            toast(`🕒 Reminder: ${order.customer_name}'s delivery is due tomorrow!`, {
+                                duration: 6000,
+                                icon: '🔔',
+                                style: { borderRadius: '10px', background: '#C6A75E', color: '#fff', fontSize: '14px', fontWeight: '600' },
+                            });
+                        });
+                    }
                     notifiedRef.current = true;
                 }
             })
