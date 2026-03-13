@@ -38,7 +38,7 @@ export default function Login({ setAuth }) {
         }}>
             <div className="card" style={{ maxWidth: 400, width: '100%', boxShadow: '0 8px 30px rgba(0,0,0,0.08)', border: 'none' }}>
                 <div style={{ textAlign: 'center', padding: '32px 24px 16px' }}>
-                    <div className="logo-circle" style={{ margin: '0 auto 16px', width: 64, height: 64, fontSize: 24 }}>DL</div>
+                    <div className="logo-circle" style={{ margin: '0 auto 16px', width: 64, height: 64, fontSize: 24 }}>DT</div>
                     <h2 style={{ fontFamily: '"Playfair Display", serif', color: 'var(--maroon-dark)', margin: 0, fontSize: 24 }}>Demo Ladies Tailor</h2>
                     <p style={{ color: 'var(--gold)', margin: '8px 0 0', fontSize: 14 }}>Billing & Management System</p>
                 </div>

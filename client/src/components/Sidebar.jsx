@@ -32,7 +32,7 @@ export default function Sidebar({ isOpen, onClose, auth, setAuth }) {
             </button>
             {/* Logo */}
             <div className="sidebar-logo">
-                <div className="logo-circle">DL</div>
+                <div className="logo-circle">DT</div>
                 <span className="logo-name">Demo Ladies Tailor</span>
                 <span className="logo-tagline">{isAdmin ? 'Admin Portal' : 'Worker Portal'}</span>
             </div>
