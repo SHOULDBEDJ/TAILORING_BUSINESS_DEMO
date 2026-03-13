@@ -2,6 +2,32 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+// --- Demo Expiration Middleware ---
+const checkDemoExpiration = (req, res, next) => {
+    const expirationDate = process.env.DEMO_EXPIRATION_DATE;
+    if (!expirationDate) return next();
+
+    // Check bypass
+    if (req.headers['x-bypass-demo'] === 'tailor_demo_bypass_2026') return next();
+
+    const now = new Date();
+    const expiry = new Date(expirationDate);
+
+    // If invalid date format, default to expired for safety if expirationDate is set
+    if (isNaN(expiry.getTime())) {
+        console.warn(`⚠️ Invalid DEMO_EXPIRATION_DATE format: ${expirationDate}. Use YYYY-MM-DD.`);
+        return next(); // Or return error? Let's stay safe and just log, but maybe better to block if user intended restriction
+    }
+
+    if (now > expiry) {
+        return res.status(403).json({
+            error: 'Demo Expired',
+            message: 'This demo instance has expired. Please contact the administrator.'
+        });
+    }
+    next();
+};
+
 // Initialize DB (creates tables if not exist)
 const { initDB } = require('./db');
 initDB().catch(err => console.error('❌ Database Initialization Error:', err));
@@ -33,6 +59,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Apply demo check
+app.use(checkDemoExpiration);
 
 // ─── Routes ───────────────────────────────────────
 app.use('/api/customers', customersRouter);

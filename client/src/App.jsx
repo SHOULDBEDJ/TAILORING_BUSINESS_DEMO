@@ -42,6 +42,31 @@ export default function App() {
     };
   }, []);
 
+  // --- Demo Expiration Check ---
+  const expirationDate = import.meta.env.VITE_DEMO_EXPIRATION_DATE;
+  const isBypassed = localStorage.getItem('demo_bypass') === 'tailor_demo_bypass_2026';
+  
+  const expiry = new Date(expirationDate);
+  const isValidDate = expirationDate && !isNaN(expiry.getTime());
+  const isExpired = isValidDate && new Date() > expiry && !isBypassed;
+
+  if (isExpired) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white p-6 text-center">
+        <div className="bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700 max-w-md">
+          <div className="text-6xl mb-4">⌛</div>
+          <h1 className="text-2xl font-bold mb-2 text-indigo-400">Demo Access Expired</h1>
+          <p className="text-slate-400 mb-6">
+            This demo instance has expired. Please contact the administrator to extend your access or graduate to the full version.
+          </p>
+          <div className="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-full bg-indigo-500 w-full animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!auth) {
     return (
       <BrowserRouter>
