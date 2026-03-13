@@ -1,7 +1,7 @@
 {
-  "name": "lm-tailor-billing-server",
+  "name": "demo-tailor-billing-server",
   "version": "1.0.0",
-  "description": "LM Ladies Tailor - Billing & Customer Management Backend",
+  "description": "Demo Ladies Tailor - Billing & Customer Management Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

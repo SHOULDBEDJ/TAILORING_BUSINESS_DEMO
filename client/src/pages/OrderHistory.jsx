@@ -72,8 +72,6 @@ export default function OrderHistory({ onMenuClick }) {
             `Dear ${order.customer_name},\n\n` +
             `Thank you for choosing Demo Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
             `We would love to hear your feedback. Your review helps us improve and also supports our small business.\n\n` +
-            `If you have a moment, please leave us a review on Google:\n` +
-            `https://g.co/kgs/LUPXvNh\n\n` +
             `Thank you for your support!\n` +
             `– Demo Ladies Tailor`
         );

@@ -95,7 +95,7 @@ export default function BillPreview({ onMenuClick }) {
             `\n\n*Total: \u20b9${parseFloat(order.total_amount).toFixed(2)}*\n` +
             `Advance Paid: \u20b9${parseFloat(order.advance_paid).toFixed(2)}\n` +
             `*Balance Due: \u20b9${parseFloat(order.balance_amount).toFixed(2)}*\n\n` +
-            `_Demo Ladies Tailor | Dajibanpeth, Beside Ganesh Temple, Hubli | 9916562127_`
+            `_Demo Ladies Tailor_`
         );
         window.open(`https://wa.me/${phoneForUrl}?text=${msg}`, '_blank');
     }
@@ -112,8 +112,6 @@ export default function BillPreview({ onMenuClick }) {
             `Dear ${order.customer_name},\n\n` +
             `Thank you for choosing Demo Ladies Tailor! We hope you are satisfied with our stitching.\n\n` +
             `We would love to hear your feedback. Your review helps us improve and also supports our small business.\n\n` +
-            `If you have a moment, please leave us a review on Google:\n` +
-            `https://g.co/kgs/LUPXvNh\n\n` +
             `Thank you for your support!\n` +
             `– Demo Ladies Tailor`
         );
@@ -201,12 +199,6 @@ export default function BillPreview({ onMenuClick }) {
                                     </h1>
                                     <p style={{ fontSize: 11, marginTop: 4 }}>✦ Luxury in Every Stitch ✦</p>
                                 </div>
-                                <p style={{ fontSize: 11, color: 'rgba(198,167,94,0.7)' }}>
-                                    DAJIBANPETH, BESIDE GANESH TEMPLE, HUBLI
-                                </p>
-                                <p style={{ fontSize: 11, color: 'rgba(198,167,94,0.7)', marginTop: 3 }}>
-                                    📞 9916562127
-                                </p>
                             </div>
 
                             {/* Bill Meta */}

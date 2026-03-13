@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'LM Ladies Tailor',
-        short_name: 'LM Tailor',
-        description: 'Billing & Customer Management System for LM Ladies Tailor',
+        name: 'Demo Ladies Tailor',
+        short_name: 'Demo Tailor',
+        description: 'Billing & Customer Management System for Demo Ladies Tailor',
         theme_color: '#1A0A10',
         background_color: '#F5F0E8',
         display: 'standalone',
