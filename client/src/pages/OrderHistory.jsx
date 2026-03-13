@@ -119,8 +119,8 @@ export default function OrderHistory({ onMenuClick }) {
             <div className="page-container">
                 {/* Filters */}
                 <div className="card mb-20">
-                    <div className="card-body filter-card-body" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                        <div style={{ flex: 2, minWidth: 200 }}>
+                    <div className="card-body filter-card-body">
+                        <div className="filter-item-search">
                             <label className="form-label"><Search size={12} style={{ marginRight: 4 }} />Search</label>
                             <input
                                 className="form-input"
@@ -130,13 +130,13 @@ export default function OrderHistory({ onMenuClick }) {
                                 onKeyDown={e => e.key === 'Enter' && fetchOrders()}
                             />
                         </div>
-                        <div style={{ flex: 1, minWidth: 140 }}>
+                        <div className="filter-item">
                             <label className="form-label"><Filter size={12} style={{ marginRight: 4 }} />Status</label>
                             <select className="form-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                                 {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
                             </select>
                         </div>
-                        <div style={{ flex: 1, minWidth: 160 }}>
+                        <div className="filter-item">
                             <label className="form-label">Delivery Date</label>
                             <input
                                 className="form-input"
@@ -145,8 +145,10 @@ export default function OrderHistory({ onMenuClick }) {
                                 onChange={e => setDateFilter(e.target.value)}
                             />
                         </div>
-                        <button className="btn btn-primary" onClick={fetchOrders}>Apply</button>
-                        <button className="btn btn-ghost" onClick={() => { setSearch(''); setStatusFilter('All'); setDateFilter(''); }}>Clear</button>
+                        <div className="filter-actions">
+                            <button className="btn btn-primary" onClick={fetchOrders}>Apply</button>
+                            <button className="btn btn-ghost" onClick={() => { setSearch(''); setStatusFilter('All'); setDateFilter(''); }}>Clear</button>
+                        </div>
                     </div>
                 </div>
 

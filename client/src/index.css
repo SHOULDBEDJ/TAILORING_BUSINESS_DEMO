@@ -358,6 +358,28 @@ h3 {
   padding: 22px;
 }
 
+.filter-card-body {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filter-item-search {
+  flex: 2;
+  min-width: 200px;
+}
+
+.filter-item {
+  flex: 1;
+  min-width: 140px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ── Stats Card ──────────────────────── */
 .stat-card {
   background: var(--white);
@@ -1008,6 +1030,26 @@ tbody td {
   /* Filter card - stack vertically */
   .filter-card-body {
     flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .filter-item, .filter-item-search {
+    min-width: 100% !important;
+    flex: none !important;
+  }
+
+  .filter-actions {
+    width: 100%;
+    margin-top: 8px;
+    grid-template-columns: 1fr 1fr;
+    display: grid;
+    gap: 8px;
+  }
+
+  .filter-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -1015,6 +1057,10 @@ tbody td {
 @media (max-width: 480px) {
   .page-container {
     padding: 12px;
+  }
+
+  .form-input, .form-select, .form-textarea, .prefix-symbol {
+    font-size: 16px !important;
   }
 
   .btn-lg {
