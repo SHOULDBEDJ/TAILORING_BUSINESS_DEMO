@@ -274,7 +274,7 @@ export default function CustomerSearch({ onMenuClick }) {
                                                     {isEditing ? (
                                                         <input
                                                             type="number"
-                                                            step="0.1"
+                                                            step="any"
                                                             value={editForm[key] || ''}
                                                             onChange={e => setEditForm({ ...editForm, [key]: e.target.value })}
                                                             style={{

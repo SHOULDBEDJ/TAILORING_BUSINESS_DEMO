@@ -8,6 +8,6 @@ if %ERRORLEVEL% NEQ 0 (
 %GIT_PATH% remote remove origin 2>nul
 %GIT_PATH% remote add origin https://github.com/SHOULDBEDJ/TAILORING_BUSINESS_DEMO.git
 %GIT_PATH% add .
-%GIT_PATH% commit -m "Configure Turso & Vercel deployment"
+%GIT_PATH% commit -m "Fix measurements to allow heavy decimals"
 echo Attempting to push...
 %GIT_PATH% push -f -u origin main
