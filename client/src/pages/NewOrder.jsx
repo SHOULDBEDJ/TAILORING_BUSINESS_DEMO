@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, ChevronDown, User, Ruler, Scissors, CreditCard, Search, Menu, Image as ImageIcon, Camera, X, Mic, Square, Trash } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, User, Ruler, Scissors, CreditCard, Search, Menu, Image as ImageIcon, Camera, X, Mic, Square, Trash, Edit3, Save, Eraser } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
+import { saveOrderOffline } from '../utils/indexedDB';
 
 const SERVICE_TYPES = ['Blouse', 'Dress', 'Lehenga', 'Chudi', 'Alteration', 'Pico', 'Fall', 'Gonda', 'Krosha Work', 'Other'];
 
@@ -51,8 +52,12 @@ export default function NewOrder({ onMenuClick, auth }) {
     // Services
     const [services, setServices] = useState([initialService()]);
 
-    // Images
+    // Images & Drawing
     const [images, setImages] = useState([]);
+    const [showDrawingPad, setShowDrawingPad] = useState(false);
+    const canvasRef = useRef(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [penColor, setPenColor] = useState('#D32F2F'); // Default to red ink for visibility
 
     // Payment
     const [advancePaid, setAdvancePaid] = useState('');
@@ -223,6 +228,69 @@ export default function NewOrder({ onMenuClick, auth }) {
         e.target.value = null; // reset input
     };
 
+    // ── Drawing Canvas Handlers ───────────────────────
+    const startDrawing = (e) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const pos = getMousePos(canvas, e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        setIsDrawing(true);
+    };
+
+    const draw = (e) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const pos = getMousePos(canvas, e);
+        ctx.strokeStyle = penColor;
+        ctx.lineWidth = 3;
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    };
+
+    const stopDrawing = () => {
+        setIsDrawing(false);
+    };
+
+    const getMousePos = (canvas, e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    };
+
+    const clearCanvas = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Fill white background so it saves properly as jpeg
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    // Initialize canvas on mount when shown
+    useEffect(() => {
+        if (showDrawingPad && canvasRef.current) {
+            clearCanvas();
+        }
+    }, [showDrawingPad]);
+
+    const saveDrawing = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const base64Str = canvas.toDataURL('image/jpeg', 0.8);
+        setImages(prev => [...prev, base64Str]);
+        setShowDrawingPad(false);
+        toast.success('Drawing saved to references');
+    };
+
     const removeImage = (index) => {
         setImages(images.filter((_, i) => i !== index));
     };
@@ -244,24 +312,63 @@ export default function NewOrder({ onMenuClick, auth }) {
         }
 
         setLoading(true);
+
+        const measPayload = {};
+        MEASUREMENT_FIELDS.forEach(f => { if (measurements[f.key]) measPayload[f.key] = parseFloat(measurements[f.key]); });
+        
+        const svcList = services.map(s => ({
+            service_type: s.service_type === 'Other' ? (s.custom_type || 'Other') : s.service_type,
+            quantity: parseInt(s.quantity) || 1,
+            price: parseFloat(s.price),
+        }));
+
+        let finalAudioBase64 = null;
+        if (audioBlob) {
+            finalAudioBase64 = await blobToBase64(audioBlob);
+        }
+
+        if (!navigator.onLine) {
+            // OFFLINE SAVE MODE
+            try {
+                await saveOrderOffline({
+                    customerPayload: {
+                        name: customer.name,
+                        phone_number: customer.phone_number,
+                        measurements: Object.keys(measPayload).length > 0 ? measPayload : undefined,
+                    },
+                    orderPayload: {
+                        booking_date: bookingDate,
+                        delivery_date: deliveryDate,
+                        advance_paid: advance,
+                        notes: customer.notes || '',
+                        measurement_type: measurementType,
+                        services: svcList,
+                        assigned_worker: assignedWorker,
+                    },
+                    images: images,
+                    audioBlobBase64: finalAudioBase64,
+                    recordingTime: recordingTime
+                });
+                
+                toast.success('Offline: Order saved locally. Will sync when online.', { duration: 5000 });
+                navigate('/');
+            } catch (err) {
+                toast.error('Failed to save order offline');
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        // ONLINE MODE
         try {
             // Create / lookup customer
-            const measPayload = {};
-            MEASUREMENT_FIELDS.forEach(f => { if (measurements[f.key]) measPayload[f.key] = parseFloat(measurements[f.key]); });
-
             const custRes = await api.post('/customers', {
                 name: customer.name,
                 phone_number: customer.phone_number,
                 measurements: Object.keys(measPayload).length > 0 ? measPayload : undefined,
             });
             const cid = custRes.data.id;
-
-            // Build services list
-            const svcList = services.map(s => ({
-                service_type: s.service_type === 'Other' ? (s.custom_type || 'Other') : s.service_type,
-                quantity: parseInt(s.quantity) || 1,
-                price: parseFloat(s.price),
-            }));
 
             const orderRes = await api.post('/orders', {
                 customer_id: cid,
@@ -281,10 +388,9 @@ export default function NewOrder({ onMenuClick, auth }) {
             }
 
             // Upload voice note if any
-            if (audioBlob) {
-                const base64Audio = await blobToBase64(audioBlob);
+            if (finalAudioBase64) {
                 await api.post(`/orders/${createdOrderId}/voice-notes`, {
-                    audio_data: base64Audio,
+                    audio_data: finalAudioBase64,
                     duration: recordingTime
                 });
             }
@@ -591,7 +697,62 @@ export default function NewOrder({ onMenuClick, auth }) {
                                     </button>
                                 </div>
                             </div>
-                            <p style={{ fontSize: 12, color: 'var(--gray)', marginTop: 4 }}>Images are automatically compressed to save space.</p>
+
+                            <div style={{ marginTop: 12 }}>
+                                {!showDrawingPad ? (
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-outline" 
+                                        style={{ width: '100%', borderColor: 'var(--maroon)', color: 'var(--maroon)' }}
+                                        onClick={() => setShowDrawingPad(true)}
+                                    >
+                                        <Edit3 size={16} /> Open Scratch Pad (Draw Neck/Blouse Patterns)
+                                    </button>
+                                ) : (
+                                    <div style={{ border: '1px solid var(--gray-light)', borderRadius: 8, padding: 12, background: 'var(--ivory)' }}>
+                                        <div className="flex-between" style={{ marginBottom: 8 }}>
+                                            <div className="flex gap-8">
+                                                <span style={{ fontSize: 13, fontWeight: 600 }}>Scratch Pad</span>
+                                                <input 
+                                                    type="color" 
+                                                    value={penColor} 
+                                                    onChange={e => setPenColor(e.target.value)}
+                                                    style={{ width: 24, height: 24, padding: 0, border: 'none', cursor: 'pointer', borderRadius: 4 }}
+                                                    title="Pen Color"
+                                                />
+                                            </div>
+                                            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setShowDrawingPad(false)} style={{ color: 'var(--gray)' }}>
+                                                <X size={16} /> Close
+                                            </button>
+                                        </div>
+                                        <div style={{ width: '100%', overflow: 'hidden', border: '1px solid #ddd', borderRadius: 4, background: 'white' }}>
+                                            <canvas
+                                                ref={canvasRef}
+                                                width={400}
+                                                height={300}
+                                                style={{ width: '100%', height: 'auto', touchAction: 'none', cursor: 'crosshair', display: 'block' }}
+                                                onMouseDown={startDrawing}
+                                                onMouseMove={draw}
+                                                onMouseUp={stopDrawing}
+                                                onMouseLeave={stopDrawing}
+                                                onTouchStart={startDrawing}
+                                                onTouchMove={draw}
+                                                onTouchEnd={stopDrawing}
+                                            />
+                                        </div>
+                                        <div className="flex gap-12 mt-12">
+                                            <button type="button" className="btn btn-sm btn-outline" onClick={clearCanvas} style={{ flex: 1 }}>
+                                                <Eraser size={14} /> Clear
+                                            </button>
+                                            <button type="button" className="btn btn-sm btn-primary" onClick={saveDrawing} style={{ flex: 1 }}>
+                                                <Save size={14} /> Save to Gallery
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <p style={{ fontSize: 12, color: 'var(--gray)', marginTop: 8 }}>Images are automatically compressed to save space.</p>
                             {images.length > 0 && (
                                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                                     {images.map((src, i) => (

@@ -13,6 +13,7 @@ import WorkerDashboard from './pages/WorkerDashboard';
 import Profits from './pages/Profits';
 import './index.css';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { syncOfflineOrders } from './utils/indexedDB';
 
 export default function App() {
   const [sidebarOpen, useState_sidebarOpen] = useState(false);
@@ -31,10 +32,16 @@ export default function App() {
     };
     const handleOnline = () => {
       toast.success('Back online! Syncing background changes...', { id: 'net' });
+      syncOfflineOrders();
     };
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
+
+    // Also attempt sync on initial load if we are online
+    if (navigator.onLine) {
+        syncOfflineOrders();
+    }
 
     return () => {
       window.removeEventListener('offline', handleOffline);
