@@ -12,7 +12,7 @@ export default function Login({ setAuth }) {
         e.preventDefault();
 
         if (role === 'Admin') {
-            if (password === 'LataMagaji') {
+            if (password === '1234') {
                 const user = { role: 'Admin', name: 'Lata' };
                 localStorage.setItem('tailor_auth', JSON.stringify(user));
                 setAuth(user);
